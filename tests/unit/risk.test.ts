@@ -82,7 +82,8 @@ describe("screenDecision", () => {
     ["purchase", "Should I put money in the stock market?"],
     ["purchase", "Should I allocate funds to high-yield bonds?"],
     ["purchase", "Should I move cash into crypto?"],
-    ["purchase", "Should I move shares into my savings?"],
+    ["purchase", "Should I transfer my capital toward the stock market?"],
+    ["purchase", "Should I place the cash into high-yield bonds?"],
   ] as const)(
     "blocks deterministic high-stakes input: %s — %s",
     (category, rawText) => {
@@ -113,6 +114,7 @@ describe("screenDecision", () => {
     ["purchase", "Should I buy an in-stock lamp?"],
     ["purchase", "Should I buy a stock-photo bundle?"],
     ["purchase", "Should I spend money on stock photos for the deck?"],
+    ["purchase", "Should I buy stock media?"],
     ["purchase", "Should I license stock footage for the presentation?"],
     ["purchase", "Should I buy a medicine-cabinet?"],
     ["scheduling", "Should I stay at this company party?"],
@@ -123,6 +125,10 @@ describe("screenDecision", () => {
     ["task", "Should I make an investment of time in this project?"],
     ["communication", "Could you loan me a charger?"],
     ["communication", "Is bonding with the team useful?"],
+    ["purchase", "Should I move shares into my savings?"],
+    ["purchase", "Should I put the stock market slide after the money slide?"],
+    ["purchase", "Should I allocate the money column next to the stock column?"],
+    ["task", "Should I move the stock market section below the cash-flow chart?"],
   ] as const)(
     "allows safe ambiguous language: %s — %s",
     (category, rawText) => {

@@ -37,9 +37,13 @@ function normalizeText(text: string): string {
     .trim();
 }
 
+const STOCK_MEDIA_KIND_SOURCE = "photos?|images?|footage|media";
+const INVESTMENT_ASSET_SOURCE =
+  `(?:stock market|stocks?(?!\\s+(?:${STOCK_MEDIA_KIND_SOURCE})\\b)|shares?|(?:high yield )?bonds?|crypto)`;
+
 const safeContextPatterns = [
   /\bin stock\b/gi,
-  /\bstock (?:photos?|images?|footage)\b/gi,
+  new RegExp(`\\bstock (?:${STOCK_MEDIA_KIND_SOURCE})\\b`, "gi"),
   /\bphoto credits?\b/gi,
   /\bmedicine (?:cabinet|ball|bag|organizer)\b/gi,
   /\b(?:this|the|my|our) company(?:'s)? (?:picnic|party|event|meeting|retreat|lunch|dinner|offsite|outing)\b/gi,
@@ -57,12 +61,18 @@ function stripSafeContexts(text: string): string {
   );
 }
 
+const explicitInvestmentPattern = new RegExp(
+  `\\binvest(?:ing)?\\s+in\\s+(?:the\\s+)?${INVESTMENT_ASSET_SOURCE}\\b`,
+  "i",
+);
+
+const financialAllocationPattern = new RegExp(
+  `\\b(?:put|allocate|move|transfer|place)\\s+(?:(?:the|this|that|my|your|his|her|its|our|their)\\s+)?(?:money|savings|funds|cash|capital)\\s+(?:in|into|to|toward|towards)\\s+(?:the\\s+)?${INVESTMENT_ASSET_SOURCE}\\b`,
+  "i",
+);
+
 const hasFinancialAllocationRisk: RiskMatcher = (text) =>
-  matchesAny(text, [
-    /\binvest(?:ing)?\b.{0,20}\bin\b.{0,30}\b(?:stock market|stocks?(?!\s+(?:photos?|images?|footage|media)\b)|shares?|crypto(?:currency)?|bonds?)\b/i,
-    /\b(?:put|allocate|move)\b.{0,20}\b(?:money|savings?|funds?|cash|capital)\b.{0,40}\b(?:stock market|stocks?(?!\s+(?:photos?|images?|footage|media)\b)|shares?|crypto(?:currency)?|bonds?)\b/i,
-    /\b(?:put|allocate|move)\b.{0,20}\b(?:stock market|stocks?(?!\s+(?:photos?|images?|footage|media)\b)|shares?|crypto(?:currency)?|bonds?)\b.{0,40}\b(?:money|savings?|funds?|cash|capital)\b/i,
-  ]);
+  matchesAny(text, [explicitInvestmentPattern, financialAllocationPattern]);
 
 const hasMedicalRisk: RiskMatcher = (text) =>
   matchesAny(text, [
