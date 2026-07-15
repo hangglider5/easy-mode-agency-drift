@@ -20,21 +20,33 @@ describe("screenDecision", () => {
 
   it.each([
     ["scheduling", "Should I stop taking my prescription?"],
+    ["scheduling", "Should I stop taking my antidepressants?"],
+    ["scheduling", "Should I get vaccinated?"],
+    ["scheduling", "Should I skip my vaccine booster?"],
     ["purchase", "Which stock should I invest my savings in?"],
     ["purchase", "Should I take this loan?"],
     ["task", "Should I file this lawsuit?"],
+    ["task", "Should I sue my landlord?"],
+    ["task", "Should I take my landlord to court?"],
+    ["communication", "Should I talk to a lawyer about this case?"],
     ["communication", "I might hurt myself tonight"],
     ["communication", "I want to cut myself"],
     ["communication", "I am thinking about harming myself"],
+    ["communication", "I want to end my life"],
+    ["communication", "I do not want to live anymore"],
     ["communication", "Should I hire an attorney?"],
     ["communication", "Should I retain legal counsel?"],
     ["communication", "Which candidate should I vote for?"],
     ["communication", "Should I support the referendum?"],
     ["communication", "Should I back the ballot measure?"],
+    ["communication", "Should I vote yes on measure 12?"],
+    ["communication", "Should I vote against the referendum?"],
     ["scheduling", "Should I quit my job?"],
     ["scheduling", "Should I stay at my job?"],
     ["scheduling", "Should I remain in this role?"],
     ["scheduling", "Should I resign?"],
+    ["scheduling", "Should I switch careers?"],
+    ["scheduling", "Should I change jobs?"],
     ["communication", "Should I fire this employee?"],
     ["communication", "Should I sign this employment contract?"],
     ["communication", "Should I get divorced?"],
@@ -47,20 +59,33 @@ describe("screenDecision", () => {
     ["purchase", "Should I refinance my debt?"],
     ["purchase", "Should I consolidate my debts?"],
     ["purchase", "Should I apply for a credit card?"],
-  ] as const)("blocks deterministic high-stakes input: %s — %s", (category, rawText) => {
-    expect(
-      screenDecision({
-        title: rawText,
-        category,
-        rawText,
-        modelRisk: "routine",
-      }),
-    ).toMatchObject({ allowed: false, risk: "high_stakes" });
-  });
+    ["purchase", "Should I purchase shares in this company?"],
+    ["purchase", "Should I sell my shares?"],
+    ["purchase", "Should I buy corporate bonds?"],
+    ["purchase", "Should I trade crypto?"],
+  ] as const)(
+    "blocks deterministic high-stakes input: %s — %s",
+    (category, rawText) => {
+      expect(
+        screenDecision({
+          title: rawText,
+          category,
+          rawText,
+          modelRisk: "routine",
+        }),
+      ).toMatchObject({ allowed: false, risk: "high_stakes" });
+    },
+  );
 
   it.each([
     ["purchase", "Buy the lamp while it is in stock?"],
+    ["purchase", "Is the lamp in stock before I buy it?"],
     ["communication", "Add a photo credit to the post?"],
+    ["scheduling", "Should I stay at this company picnic?"],
+    ["scheduling", "Should I stay at the company event?"],
+    ["scheduling", "Should I stay at this company meeting?"],
+    ["task", "Should I use the crypto library for this task?"],
+    ["task", "Summarize the technical debt in the report?"],
   ] as const)(
     "allows safe ambiguous language: %s — %s",
     (category, rawText) => {
