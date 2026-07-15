@@ -28,12 +28,21 @@ function matchesAny(text: string, patterns: readonly RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
 }
 
+function normalizeText(text: string): string {
+  return text
+    .normalize("NFKC")
+    .replace(/[\u2018\u2019\u02bc]/g, "'")
+    .replace(/[\u2010-\u2015-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 const safeContextPatterns = [
   /\bin stock\b/gi,
   /\bstock (?:photos?|images?|footage)\b/gi,
   /\bphoto credits?\b/gi,
   /\bmedicine (?:cabinet|ball|bag|organizer)\b/gi,
-  /\b(?:this|the|our) company (?:picnic|party|event|meeting|retreat|lunch|dinner|offsite|outing)\b/gi,
+  /\b(?:this|the|my|our) company(?:'s)? (?:picnic|party|event|meeting|retreat|lunch|dinner|offsite|outing)\b/gi,
   /\bmove (?:these|the|my|our) (?:files?|documents?|folders?|records?) permanently\b/gi,
   /\binvestment of (?:time|effort)\b/gi,
   /\btechnical debt\b/gi,
@@ -47,6 +56,11 @@ function stripSafeContexts(text: string): string {
     text,
   );
 }
+
+const hasExplicitInvestmentAssetRisk: RiskMatcher = (text) =>
+  /\binvest(?:ing)?\b.{0,20}\bin\b.{0,30}\b(?:stocks?|shares?|crypto(?:currency)?|bonds?)\b/i.test(
+    text,
+  );
 
 const hasMedicalRisk: RiskMatcher = (text) =>
   matchesAny(text, [
@@ -129,10 +143,12 @@ const UNSUPPORTED_REASON =
   "This decision is outside the supported routine categories.";
 
 export function screenDecision(input: RiskInput): RiskResult {
-  const texts = [input.title, input.rawText].map(stripSafeContexts);
+  const normalizedTexts = [input.title, input.rawText].map(normalizeText);
+  const texts = normalizedTexts.map(stripSafeContexts);
 
   if (
     input.modelRisk === "high_stakes" ||
+    normalizedTexts.some(hasExplicitInvestmentAssetRisk) ||
     highStakesMatchers.some((matchesRisk) =>
       texts.some((text) => matchesRisk(text)),
     )
