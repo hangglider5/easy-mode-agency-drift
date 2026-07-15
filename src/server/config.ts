@@ -2,14 +2,20 @@ import { z } from "zod";
 
 const EnvSchema = z.object({
   DEEPSEEK_API_KEY: z.string().min(1),
-  DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
+  DEEPSEEK_BASE_URL: z
+    .literal("https://api.deepseek.com")
+    .default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.literal("deepseek-v4-pro").default("deepseek-v4-pro"),
   DATABASE_PATH: z.string().default("./data/easy-mode.sqlite"),
   PORT: z.coerce.number().int().positive().default(8787),
 });
 
 export type AppConfig = {
-  deepseek: { apiKey: string; baseURL: string; model: "deepseek-v4-pro" };
+  deepseek: {
+    apiKey: string;
+    baseURL: "https://api.deepseek.com";
+    model: "deepseek-v4-pro";
+  };
   databasePath: string;
   port: number;
 };

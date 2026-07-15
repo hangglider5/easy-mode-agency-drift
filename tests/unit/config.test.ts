@@ -14,4 +14,13 @@ describe("loadConfig", () => {
     });
     expect(config).not.toHaveProperty("openai");
   });
+
+  it("rejects alternate DeepSeek endpoints", () => {
+    expect(() =>
+      loadConfig({
+        DEEPSEEK_API_KEY: "deepseek-test",
+        DEEPSEEK_BASE_URL: "https://api.openai.com/v1",
+      }),
+    ).toThrow(/DEEPSEEK_BASE_URL/);
+  });
 });
