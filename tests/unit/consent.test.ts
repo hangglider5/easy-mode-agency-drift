@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DomainEventSchema, type DomainEvent } from "../../src/domain/events";
 import { assertCanDelegate, resolveConsent } from "../../src/domain/consent";
+import type { ConsentGrant } from "../../src/shared/domainSchemas";
 
 const profileId = "00000000-0000-4000-8000-000000000001";
 const id = (suffix: number) =>
@@ -11,6 +12,7 @@ function grant(
   consentId: string,
   level: "recommend" | "preselect" | "decide" | "proxy",
   occurredAt: string,
+  category: ConsentGrant["category"] = "scheduling",
 ): DomainEvent {
   return DomainEventSchema.parse({
     id: eventId,
@@ -23,7 +25,7 @@ function grant(
       consent: {
         id: consentId,
         profileId,
-        category: "scheduling",
+        category,
         level,
         grantedAt: occurredAt,
         revokedAt: null,
@@ -86,15 +88,76 @@ describe("consent resolution", () => {
     expect(resolveConsent(events, "scheduling")?.id).toBe(currentConsentId);
   });
 
+  it("keeps consent grants isolated by category", () => {
+    const schedulingConsentId = id(14);
+    const foodConsentId = id(15);
+    const events = [
+      grant(
+        id(16),
+        schedulingConsentId,
+        "recommend",
+        "2026-07-01T00:00:00.000Z",
+      ),
+      grant(
+        id(17),
+        foodConsentId,
+        "decide",
+        "2026-07-02T00:00:00.000Z",
+        "food",
+      ),
+    ];
+
+    expect(resolveConsent(events, "scheduling")?.id).toBe(
+      schedulingConsentId,
+    );
+    expect(resolveConsent(events, "food")?.id).toBe(foodConsentId);
+  });
+
+  it("revokes only the matching consent and category", () => {
+    const schedulingConsentId = id(18);
+    const foodConsentId = id(19);
+    const events = [
+      grant(
+        id(20),
+        schedulingConsentId,
+        "proxy",
+        "2026-07-01T00:00:00.000Z",
+      ),
+      grant(
+        id(21),
+        foodConsentId,
+        "decide",
+        "2026-07-02T00:00:00.000Z",
+        "food",
+      ),
+      revoke(
+        id(22),
+        schedulingConsentId,
+        "2026-07-03T00:00:00.000Z",
+      ),
+    ];
+
+    expect(resolveConsent(events, "scheduling")).toBeNull();
+    expect(resolveConsent(events, "food")?.id).toBe(foodConsentId);
+  });
+
+  it("lets a higher grant authorize a lower delegation level", () => {
+    const consent = resolveConsent(
+      [grant(id(23), id(24), "proxy", "2026-07-01T00:00:00.000Z")],
+      "scheduling",
+    );
+
+    expect(() => assertCanDelegate("recommend", consent)).not.toThrow();
+  });
+
   it("rejects delegation above the active consent level", () => {
     const consent = resolveConsent(
-      [grant(id(14), id(15), "recommend", "2026-07-01T00:00:00.000Z")],
+      [grant(id(25), id(26), "recommend", "2026-07-01T00:00:00.000Z")],
       "scheduling",
     );
 
     expect(() => assertCanDelegate("proxy", consent)).toThrow(
       /missing proxy consent/i,
     );
-    expect(() => assertCanDelegate("recommend", consent)).not.toThrow();
   });
 });

@@ -78,6 +78,9 @@ export function buildLineage(
         let node = PreferenceProposedPayloadSchema.parse(
           event.payload,
         ).preference;
+        if (nodes.has(node.id)) {
+          throw new Error(`Duplicate preference id: ${node.id}`);
+        }
         validateNewPreference(node, nodes);
         if (
           node.sourceEventIds.some((eventId) => !eventIds.has(eventId)) ||

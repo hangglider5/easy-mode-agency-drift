@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DomainEventSchema } from "../../src/domain/events";
+import { DomainEventSchema, type DomainEvent } from "../../src/domain/events";
 import {
   buildLineage,
   getSyntheticDepth,
@@ -39,6 +39,23 @@ function graph(nodes: PreferenceNode[]): PreferenceGraph {
     usedBy: new Map(),
     relations: [],
   };
+}
+
+function event(
+  eventId: string,
+  type: DomainEvent["type"],
+  payload: unknown,
+  occurredAt = "2026-07-01T00:00:00.000Z",
+): DomainEvent {
+  return DomainEventSchema.parse({
+    id: eventId,
+    profileId,
+    aggregateId: profileId,
+    type,
+    actor: "human",
+    occurredAt,
+    payload,
+  });
 }
 
 describe("preference lineage", () => {
@@ -237,4 +254,102 @@ describe("preference lineage", () => {
 
     expect(lineage.nodes.get(preferenceId)?.status).toBe("unverified");
   });
+
+  it("rejects a later proposal that would overwrite and reactivate an identity", () => {
+    const parentPreferenceId = id(31);
+    const parentEventId = id(32);
+    const preferenceId = id(33);
+    const proposalEventId = id(34);
+    const duplicateEventId = id(37);
+    const events = [
+      event(
+        parentEventId,
+        "preference_proposed",
+        {
+          preference: preference(parentPreferenceId, parentEventId, {
+            sourceType: "explicit_user_statement",
+          }),
+        },
+      ),
+      event(proposalEventId, "preference_proposed", {
+        preference: preference(preferenceId, proposalEventId),
+      }),
+      event(id(35), "preference_confirmed", { preferenceId }),
+      event(id(36), "preference_retracted", { preferenceId }),
+      event(duplicateEventId, "preference_proposed", {
+        preference: preference(preferenceId, duplicateEventId, {
+          proposition: "Replacement proposition",
+          sourceType: "explicit_user_statement",
+          parentPreferenceIds: [parentPreferenceId],
+          status: "active",
+        }),
+      }),
+    ];
+
+    expect(() => buildLineage(events)).toThrow(/duplicate preference id/i);
+  });
+
+  it("rejects an identical duplicate proposal instead of treating it as an event retry", () => {
+    const preferenceId = id(38);
+    const firstEventId = id(39);
+    const duplicateEventId = id(40);
+    const node = preference(preferenceId, firstEventId);
+
+    expect(() =>
+      buildLineage([
+        event(firstEventId, "preference_proposed", { preference: node }),
+        event(duplicateEventId, "preference_proposed", { preference: node }),
+      ]),
+    ).toThrow(/duplicate preference id/i);
+  });
+
+  it.each([
+    {
+      type: "preference_rejected" as const,
+      expectedStatus: "retracted" as const,
+      targetKey: null,
+    },
+    {
+      type: "preference_retracted" as const,
+      expectedStatus: "retracted" as const,
+      targetKey: null,
+    },
+    {
+      type: "preference_contradicted" as const,
+      expectedStatus: "contradicted" as const,
+      targetKey: "contradictingPreferenceId" as const,
+    },
+    {
+      type: "preference_superseded" as const,
+      expectedStatus: "superseded" as const,
+      targetKey: "supersededById" as const,
+    },
+  ])(
+    "applies later $type events in ledger order and keeps the terminal status after confirmation",
+    ({ type, expectedStatus, targetKey }) => {
+      const preferenceId = id(41);
+      const proposalEventId = id(42);
+      const targetPreferenceId = id(43);
+      const terminalPayload: Record<string, string> = { preferenceId };
+      if (targetKey) terminalPayload[targetKey] = targetPreferenceId;
+
+      const lineage = buildLineage([
+        event(
+          proposalEventId,
+          "preference_proposed",
+          { preference: preference(preferenceId, proposalEventId) },
+          "2026-07-02T00:00:00.000Z",
+        ),
+        event(
+          id(44),
+          type,
+          terminalPayload,
+          "2026-07-01T00:00:00.000Z",
+        ),
+        event(id(45), "preference_confirmed", { preferenceId }),
+      ]);
+
+      expect(lineage.nodes.get(preferenceId)?.status).toBe(expectedStatus);
+    },
+  );
 });
