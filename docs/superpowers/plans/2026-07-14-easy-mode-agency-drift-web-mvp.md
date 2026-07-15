@@ -358,7 +358,7 @@ test-results/
 coverage/
 ```
 
-Copy `.env.example` to `.env`, then stop and ask the user to fill `DEEPSEEK_API_KEY`. Never display, read back, or commit the value. Do not add an OpenAI key variable: GPT-5.6 participates through Codex during development, not through the shipped application's runtime.
+Copy `.env.example` to `.env`. If the user has not supplied the key yet, leave `DEEPSEEK_API_KEY=` blank and continue offline implementation and verification; before the first live DeepSeek model smoke, stop and ask the user to fill it locally. Never display, read back, or commit the value. Do not add an OpenAI key variable: GPT-5.6 participates through Codex during development, not through the shipped application's runtime.
 
 - [ ] **Step 7: Add the minimal client shell and build configuration**
 
@@ -389,11 +389,11 @@ Run:
 ```bash
 npm test -- tests/unit/config.test.ts
 npm run typecheck
-npm run build
+npm exec vite -- build
 git check-ignore .env
 ```
 
-Expected: config test PASS; typecheck and build exit 0; `git check-ignore` prints `.env`.
+Expected: config test PASS; typecheck and Vite client build exit 0; `git check-ignore` prints `.env`. Keep the exact production `build` script from Step 2, but defer `npm run build` until Task 7 because its server entrypoint and copied SQLite schema are owned by Tasks 7 and 4 respectively.
 
 - [ ] **Step 9: Commit**
 
@@ -1270,11 +1270,12 @@ Run:
 npm test -- tests/integration/api.test.ts tests/unit/actionArtifactService.test.ts
 npm test
 npm run typecheck
+npm run build
 git add src/server tests/integration/api.test.ts
 git commit -m "feat: add Decision Sweep API"
 ```
 
-Expected: API vertical slice PASS; unsafe decisions never reach `deepseek.recommend`.
+Expected: API vertical slice PASS; unsafe decisions never reach `deepseek.recommend`; the complete client and production server build exits 0 now that both `src/server/index.ts` and `src/server/db/schema.sql` exist.
 
 ## Task 8: Build the accepted Decision Sweep frontend
 
