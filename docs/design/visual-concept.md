@@ -42,7 +42,7 @@ The following colors are exact pixels sampled from the accepted desktop referenc
 | `--color-text-muted` | `#3F414D` | Decision Sweep desktop supporting copy `(478, 218)` | Body copy, metadata, timestamps, and helper text |
 | `--color-border` | `#E0E0E2` | Decision Sweep desktop header divider `(164, 87)` | One-pixel dividers, input borders, and card borders |
 | `--color-accent` | `#17663B` | Decision Sweep desktop primary-action fill, including `(983, 904)`; most frequent green pixel in the button crop | Every primary action, selected rail node, success icon, and focus indicator |
-| `--color-accent-soft` | `#ECF5ED` | Proxy/Receipt desktop selected-lineage fill `(1053, 167)` | Hover surfaces, selected lineage background, and quiet success status |
+| `--color-accent-soft` | `#ECF5ED` | Proxy/Receipt desktop final selected-lineage panel `(1121, 479)` | Hover surfaces, selected lineage background, and quiet success status |
 
 No red, orange, blue, purple, gradient, glow, or tinted off-white is part of the accepted palette. `#FEFEFE` must not be replaced with cream, beige, or a warmer neutral.
 
@@ -128,7 +128,12 @@ Use sentence case. The only all-caps strings allowed are the exact utility label
 - Rail node: `36px` diameter; `1.5px #17663B` outline; selected node uses `#17663B` fill and `#FFFFFF` numeral.
 - Rail connector: `1px #E0E0E2`; row title-to-supporting-copy gap `4px`; row-to-row rhythm `92px`.
 - Expanded decision: `8px` radius, `1px #E0E0E2` border, no shadow, `26px` desktop padding and `16px` mobile padding.
-- Disclosure chevron: `16px`, `1.5px` stroke, round caps and joins; rotate the same SVG rather than substituting a text glyph.
+- Decision-row interactive target: full row width, `92px` minimum height, `8px` radius, and a `44px` minimum disclosure hit target. Resting rows use a transparent fill, no border, `#000000` title, and `#3F414D` supporting text.
+- Hover: `#ECF5ED` row fill with no border; text colors and geometry do not change.
+- Focus-visible: `#FFFFFF` row fill plus the global `3px #17663B` outline and `2px #FFFFFF` offset; do not use a glow.
+- Pressed: `#ECF5ED` fill with an inset `1px #17663B` border; keep the `92px` row size by using `box-sizing: border-box`.
+- Current/expanded: transparent row fill, no row border, selected `#17663B` node with `#FFFFFF` numeral, `#000000` title, and the bordered expanded-decision panel immediately below. `aria-current="step"` and `aria-expanded="true"` are both present.
+- Disclosure chevron: one `16px` right-pointing SVG at `0deg`, with `1.5px` stroke, round caps, and round joins. Collapsed is exactly `rotate(0deg)` (points right); expanded is exactly `rotate(-90deg)` (points up). Transition rotation for `120ms cubic-bezier(0.2, 0, 0, 1)` and use `0ms` under reduced motion. Hover, focus-visible, pressed, and current states inherit the row colors above; the chevron remains `currentColor` and never receives its own colored container.
 
 ### Receipt
 
@@ -164,7 +169,7 @@ No spring, bounce, parallax, glow, pulse, or looping ambient animation is allowe
 
 ## Allowed visible copy
 
-This section is the verbatim implementation copy lock after applying the user's binding content override. Scenario text visible in the old raster references but absent below is rejected, not implicitly allowed. Do not add, rename, or reorder above-the-fold strings without updating this contract.
+This section locks every static string verbatim after applying the user's binding content override and separately locks the one allowed dynamic string template. Scenario text visible in the old raster references but absent below is rejected, not implicitly allowed. Do not add, rename, reorder, or introduce another dynamic above-the-fold string without updating this contract.
 
 ### Decision Sweep desktop
 
@@ -183,6 +188,7 @@ Settings
 STEP 1 OF 1
 What are you avoiding deciding?
 Be specific. A clear prompt gets better recommendations.
+<current>/500
 Decline Friday’s optional status meeting to finish the proposal
 Run Decision Sweep
 Decision Sweep Results
@@ -354,4 +360,6 @@ Status
 v1.0.0
 ```
 
-There are no additional allowed above-the-fold strings. Empty states, errors, loading labels, accessibility-only names, and post-action copy may be added only when they are not visually rendered above the fold or when this contract is explicitly revised.
+`<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The screenshot's `61/500` is only the reference-state rendering of this template, not fixed copy; an empty input renders `0/500`.
+
+Apart from that evaluated `<current>/500` template, there are no additional allowed above-the-fold strings. Empty states, errors, loading labels, accessibility-only names, and post-action copy may be added only when they are not visually rendered above the fold or when this contract is explicitly revised.
