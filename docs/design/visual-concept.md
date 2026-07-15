@@ -171,6 +171,8 @@ No spring, bounce, parallax, glow, pulse, or looping ambient animation is allowe
 
 This section locks every static string verbatim after applying the user's binding content override and separately locks the one allowed dynamic string template. Scenario text visible in the old raster references but absent below is rejected, not implicitly allowed. Do not add, rename, reorder, or introduce another dynamic above-the-fold string without updating this contract.
 
+Each block records repeated strings and avatar initials once per visible occurrence in the declared component traversal order. Rasterized logo marks, SVG control/status glyphs, and mobile operating-system chrome (time, signal, Wi-Fi, and battery) are icons or host chrome rather than product copy and are intentionally excluded.
+
 ### Decision Sweep desktop
 
 ```text
@@ -188,8 +190,8 @@ Settings
 STEP 1 OF 1
 What are you avoiding deciding?
 Be specific. A clear prompt gets better recommendations.
-<current>/500
 Decline Friday’s optional status meeting to finish the proposal
+<current>/500
 Run Decision Sweep
 Decision Sweep Results
 3 recommendations
@@ -286,6 +288,7 @@ EASY MODE ACTIVE
 Conversation ID: CONV-2025-05-19-000742
 Status: Resolved
 View all conversations
+EM
 Easy Mode
 Proxy
 10:14:22 AM
@@ -294,12 +297,14 @@ The update can be shared asynchronously.
 Shall we decline and send the async note?
 Event ID: EVT-8F3A-001247
 Context
+PY
 Proxy You
 Proxy
 10:14:36 AM
 Yes. Decline the optional meeting and send the async update.
 Proceed.
 Event ID: EVT-8F3A-001248
+EM
 Easy Mode
 Proxy
 10:14:41 AM
@@ -307,6 +312,7 @@ Confirmed. Sending the decline note.
 The proposal focus block is protected.
 This decision stays within your authorized boundaries.
 Event ID: EVT-8F3A-001249
+PY
 Proxy You
 Proxy
 10:14:45 AM
