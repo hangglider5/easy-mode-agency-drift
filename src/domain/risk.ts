@@ -38,8 +38,14 @@ function normalizeText(text: string): string {
 }
 
 const STOCK_MEDIA_KIND_SOURCE = "photos?|images?|footage|media";
+const CONTENT_LAYOUT_FOLLOWER_SOURCE =
+  `(?:${STOCK_MEDIA_KIND_SOURCE}|columns?|slides?|sections?|charts?|worksheets?)`;
+const DETERMINER_OR_POSSESSIVE_SOURCE =
+  "(?:the|this|that|my|your|his|her|its|our|their)";
+const FUNDS_RESOURCE_SOURCE =
+  `(?:money|savings|funds|cash|capital)\\b(?!\\s+${CONTENT_LAYOUT_FOLLOWER_SOURCE}\\b)`;
 const INVESTMENT_ASSET_SOURCE =
-  `(?:stock market|stocks?(?!\\s+(?:${STOCK_MEDIA_KIND_SOURCE})\\b)|shares?|(?:high yield )?bonds?|crypto)`;
+  `(?:crypto(?:currency)?|stock market|(?:[a-z]+\\s+){0,3}(?:stocks?|shares?|bonds?))\\b(?!\\s+(?:${CONTENT_LAYOUT_FOLLOWER_SOURCE}|market)\\b)`;
 
 const safeContextPatterns = [
   /\bin stock\b/gi,
@@ -62,17 +68,31 @@ function stripSafeContexts(text: string): string {
 }
 
 const explicitInvestmentPattern = new RegExp(
-  `\\binvest(?:ing)?\\s+in\\s+(?:the\\s+)?${INVESTMENT_ASSET_SOURCE}\\b`,
+  `\\binvest(?:ing)?\\s+in\\s+(?:the\\s+)?${INVESTMENT_ASSET_SOURCE}`,
   "i",
 );
 
-const financialAllocationPattern = new RegExp(
-  `\\b(?:put|allocate|move|transfer|place)\\s+(?:(?:the|this|that|my|your|his|her|its|our|their)\\s+)?(?:money|savings|funds|cash|capital)\\s+(?:in|into|to|toward|towards)\\s+(?:the\\s+)?${INVESTMENT_ASSET_SOURCE}\\b`,
+const forwardFinancialAllocationPattern = new RegExp(
+  `\\b(?:put|allocate|move|transfer|place)\\s+(?:${DETERMINER_OR_POSSESSIVE_SOURCE}\\s+)?${FUNDS_RESOURCE_SOURCE}\\s+(?:in|into|to|toward|towards)\\s+(?:the\\s+)?${INVESTMENT_ASSET_SOURCE}`,
+  "i",
+);
+
+const reverseFinancialAllocationPattern = new RegExp(
+  `\\b(?:move|transfer|place)\\s+(?:${DETERMINER_OR_POSSESSIVE_SOURCE}\\s+)?${INVESTMENT_ASSET_SOURCE}\\s+(?:into|to)\\s+(?:${DETERMINER_OR_POSSESSIVE_SOURCE}\\s+)?${FUNDS_RESOURCE_SOURCE}`,
+  "i",
+);
+
+const directFinancialAssetPattern = new RegExp(
+  `\\b(?:buy|purchase|sell|trade|pick|choose)\\b.{0,40}\\b${INVESTMENT_ASSET_SOURCE}`,
   "i",
 );
 
 const hasFinancialAllocationRisk: RiskMatcher = (text) =>
-  matchesAny(text, [explicitInvestmentPattern, financialAllocationPattern]);
+  matchesAny(text, [
+    explicitInvestmentPattern,
+    forwardFinancialAllocationPattern,
+    reverseFinancialAllocationPattern,
+  ]);
 
 const hasMedicalRisk: RiskMatcher = (text) =>
   matchesAny(text, [
@@ -129,7 +149,7 @@ const hasFinancialRisk: RiskMatcher = (text) =>
   matchesAny(text, [
     /\b(?:loans?|mortgages?|investments?|credit cards?|debts?)\b/i,
     /\b(?:borrow|lend|repay)\b.{0,30}\b(?:money|loans?|debts?|mortgages?)\b|\b(?:money|loans?|debts?|mortgages?)\b.{0,30}\b(?:borrow|lend|repay)\b/i,
-    /\b(?:buy|purchase|sell|trade|pick|choose)\b.{0,40}\b(?:stocks?|shares?|crypto(?:currency)?|bonds?)\b/i,
+    directFinancialAssetPattern,
     /\binvest(?:ing)?\b.{0,30}\b(?:savings?|money|funds?)\b|\b(?:savings?|money|funds?)\b.{0,30}\binvest(?:ing)?\b/i,
     /\b(?:credit score|credit report|line of credit|life savings)\b/i,
   ]);
