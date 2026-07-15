@@ -38,14 +38,16 @@ function normalizeText(text: string): string {
 }
 
 const STOCK_MEDIA_KIND_SOURCE = "photos?|images?|footage|media";
+const SOFTWARE_LABEL_SOURCE =
+  "librar(?:y|ies)|packages?|modules?|sdks?|frameworks?|toolkits?";
 const CONTENT_LAYOUT_FOLLOWER_SOURCE =
-  `(?:${STOCK_MEDIA_KIND_SOURCE}|columns?|slides?|sections?|charts?|worksheets?)`;
+  `(?:${STOCK_MEDIA_KIND_SOURCE}|${SOFTWARE_LABEL_SOURCE}|columns?|slides?|sections?|charts?|worksheets?)`;
 const DETERMINER_OR_POSSESSIVE_SOURCE =
   "(?:the|this|that|my|your|his|her|its|our|their)";
 const FUNDS_RESOURCE_SOURCE =
   `(?:money|savings|funds|cash|capital)\\b(?!\\s+${CONTENT_LAYOUT_FOLLOWER_SOURCE}\\b)`;
 const INVESTMENT_ASSET_SOURCE =
-  `(?:crypto(?:currency)?|stock market|(?:[a-z]+\\s+){0,3}(?:stocks?|shares?|bonds?))\\b(?!\\s+(?:${CONTENT_LAYOUT_FOLLOWER_SOURCE}|market)\\b)`;
+  `(?:stock market|bond market|crypto market|cryptocurrency market|crypto(?:currency)?|(?:[a-z]+\\s+){0,3}(?:stocks?|shares?|bonds?))\\b(?!\\s+(?:${CONTENT_LAYOUT_FOLLOWER_SOURCE}|market)\\b)`;
 
 const safeContextPatterns = [
   /\bin stock\b/gi,
