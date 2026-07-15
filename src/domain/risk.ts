@@ -57,10 +57,12 @@ function stripSafeContexts(text: string): string {
   );
 }
 
-const hasExplicitInvestmentAssetRisk: RiskMatcher = (text) =>
-  /\binvest(?:ing)?\b.{0,20}\bin\b.{0,30}\b(?:stocks?|shares?|crypto(?:currency)?|bonds?)\b/i.test(
-    text,
-  );
+const hasFinancialAllocationRisk: RiskMatcher = (text) =>
+  matchesAny(text, [
+    /\binvest(?:ing)?\b.{0,20}\bin\b.{0,30}\b(?:stock market|stocks?(?!\s+(?:photos?|images?|footage|media)\b)|shares?|crypto(?:currency)?|bonds?)\b/i,
+    /\b(?:put|allocate|move)\b.{0,20}\b(?:money|savings?|funds?|cash|capital)\b.{0,40}\b(?:stock market|stocks?(?!\s+(?:photos?|images?|footage|media)\b)|shares?|crypto(?:currency)?|bonds?)\b/i,
+    /\b(?:put|allocate|move)\b.{0,20}\b(?:stock market|stocks?(?!\s+(?:photos?|images?|footage|media)\b)|shares?|crypto(?:currency)?|bonds?)\b.{0,40}\b(?:money|savings?|funds?|cash|capital)\b/i,
+  ]);
 
 const hasMedicalRisk: RiskMatcher = (text) =>
   matchesAny(text, [
@@ -148,7 +150,7 @@ export function screenDecision(input: RiskInput): RiskResult {
 
   if (
     input.modelRisk === "high_stakes" ||
-    normalizedTexts.some(hasExplicitInvestmentAssetRisk) ||
+    normalizedTexts.some(hasFinancialAllocationRisk) ||
     highStakesMatchers.some((matchesRisk) =>
       texts.some((text) => matchesRisk(text)),
     )

@@ -77,6 +77,12 @@ describe("screenDecision", () => {
     ["purchase", "Should I invest in stock?"],
     ["purchase", "I am investing in crypto."],
     ["purchase", "Is the lamp in stock, and should I buy shares?"],
+    ["purchase", "Should I put my money in stock?"],
+    ["purchase", "Should I put my savings into shares?"],
+    ["purchase", "Should I put money in the stock market?"],
+    ["purchase", "Should I allocate funds to high-yield bonds?"],
+    ["purchase", "Should I move cash into crypto?"],
+    ["purchase", "Should I move shares into my savings?"],
   ] as const)(
     "blocks deterministic high-stakes input: %s — %s",
     (category, rawText) => {
@@ -106,6 +112,7 @@ describe("screenDecision", () => {
     ["purchase", "Should I buy stock photos?"],
     ["purchase", "Should I buy an in-stock lamp?"],
     ["purchase", "Should I buy a stock-photo bundle?"],
+    ["purchase", "Should I spend money on stock photos for the deck?"],
     ["purchase", "Should I license stock footage for the presentation?"],
     ["purchase", "Should I buy a medicine-cabinet?"],
     ["scheduling", "Should I stay at this company party?"],
