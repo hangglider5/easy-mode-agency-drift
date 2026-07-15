@@ -28,6 +28,26 @@ function matchesAny(text: string, patterns: readonly RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
 }
 
+const safeContextPatterns = [
+  /\bin stock\b/gi,
+  /\bstock (?:photos?|images?|footage)\b/gi,
+  /\bphoto credits?\b/gi,
+  /\bmedicine (?:cabinet|ball|bag|organizer)\b/gi,
+  /\b(?:this|the|our) company (?:picnic|party|event|meeting|retreat|lunch|dinner|offsite|outing)\b/gi,
+  /\bmove (?:these|the|my|our) (?:files?|documents?|folders?|records?) permanently\b/gi,
+  /\binvestment of (?:time|effort)\b/gi,
+  /\btechnical debt\b/gi,
+  /\bloan (?:me|us) (?:a |an |the )?(?:charger|cable|book|pen|tool)\b/gi,
+];
+
+function stripSafeContexts(text: string): string {
+  return safeContextPatterns.reduce(
+    (remaining, pattern) =>
+      remaining.replace(pattern, (match) => " ".repeat(match.length)),
+    text,
+  );
+}
+
 const hasMedicalRisk: RiskMatcher = (text) =>
   matchesAny(text, [
     /\b(?:prescription|medication|medicine|antidepressants?|dosage|diagnos(?:e|is)|surgery|treatment)\b/i,
@@ -60,7 +80,7 @@ const hasPoliticalRisk: RiskMatcher = (text) =>
 
 const hasEmploymentRisk: RiskMatcher = (text) =>
   matchesAny(text, [
-    /\b(?:stay|remain)(?: at| in| with)? (?:my|this|the) (?:job|company|role|position)\b(?!\s+(?:picnic|event|meeting)\b)/i,
+    /\b(?:stay|remain)(?: at| in| with)? (?:my|this|the) (?:job|company|role|position)\b/i,
     /\b(?:quit|leave) (?:my|this|the) (?:job|company|role|position|career)\b/i,
     /\b(?:switch|change) (?:my )?(?:careers?|jobs?|roles?|positions?)\b/i,
     /\bresign(?:ation)?\b/i,
@@ -73,15 +93,18 @@ const hasRelationshipRisk: RiskMatcher = (text) =>
 
 const hasRelocationRisk: RiskMatcher = (text) =>
   matchesAny(text, [
-    /\b(?:relocate|move)\b.{0,50}\b(?:permanently|for good)\b/i,
+    /\brelocate\b.{0,50}\b(?:permanently|for good)\b/i,
+    /\bmove\b.{0,50}\b(?:country|city|state|province|home|house|apartment|abroad)\b.{0,30}\b(?:permanently|for good)\b/i,
+    /\bmove\b.{0,30}\b(?:permanently|for good)\b.{0,30}\b(?:country|city|state|province|home|house|apartment|abroad)\b/i,
     /\b(?:immigrat|emigrat)(?:e|ing|ion)\b/i,
   ]);
 
 const hasFinancialRisk: RiskMatcher = (text) =>
   matchesAny(text, [
-    /\b(?:buy|purchase|sell|trade|pick|choose)(?:\s+\w+){0,3}\s+(?<!in )\b(?:stocks?|shares?|crypto(?:currency)?|bonds?)\b/i,
+    /\b(?:loans?|mortgages?|investments?|credit cards?|debts?)\b/i,
+    /\b(?:borrow|lend|repay)\b.{0,30}\b(?:money|loans?|debts?|mortgages?)\b|\b(?:money|loans?|debts?|mortgages?)\b.{0,30}\b(?:borrow|lend|repay)\b/i,
+    /\b(?:buy|purchase|sell|trade|pick|choose)\b.{0,40}\b(?:stocks?|shares?|crypto(?:currency)?|bonds?)\b/i,
     /\binvest(?:ing)?\b.{0,30}\b(?:savings?|money|funds?)\b|\b(?:savings?|money|funds?)\b.{0,30}\binvest(?:ing)?\b/i,
-    /\b(?:take|accept|apply for|refinanc(?:e|ing)|consolidat(?:e|ing)|pay off)\b.{0,30}\b(?:debts?|loans?|mortgages?|credit cards?)\b/i,
     /\b(?:credit score|credit report|line of credit|life savings)\b/i,
   ]);
 
@@ -106,7 +129,7 @@ const UNSUPPORTED_REASON =
   "This decision is outside the supported routine categories.";
 
 export function screenDecision(input: RiskInput): RiskResult {
-  const texts = [input.title, input.rawText];
+  const texts = [input.title, input.rawText].map(stripSafeContexts);
 
   if (
     input.modelRisk === "high_stakes" ||
