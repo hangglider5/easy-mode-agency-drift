@@ -4,9 +4,9 @@
 
 **Goal:** Build a browser-first Easy Mode MVP that closes low-stakes decisions, records preference provenance, demonstrates Proxy You agency drift, and produces a calculated Perfect Consent reveal.
 
-**Architecture:** A React + Vite client talks to an Express API backed by an append-only SQLite decision ledger. DeepSeek V4 Pro parses and recommends decisions and runs both user projections; GPT-5.6 independently audits decisive preference lineages; deterministic TypeScript enforces safety, consent, provenance, replay, and metrics.
+**Architecture:** A React + Vite client talks to an Express API backed by an append-only SQLite decision ledger. DeepSeek V4 Pro is the sole runtime model for parsing, recommendation, preference proposals, and both user projections; deterministic TypeScript enforces safety, consent, provenance, replay, lineage evidence, and metrics. GPT-5.6 is used through Codex during development and is documented as build-process evidence rather than shipped as an API dependency.
 
-**Tech Stack:** Node.js 22+, TypeScript, React 19, Vite, Express, SQLite via `better-sqlite3`, Zod, official `openai` JavaScript SDK configured for DeepSeek Chat Completions and OpenAI Responses, Vitest, React Testing Library, Supertest, Playwright, vanilla CSS Modules and design tokens.
+**Tech Stack:** Node.js 22+, TypeScript, React 19, Vite, Express, SQLite via `better-sqlite3`, Zod, the `openai` JavaScript SDK configured only as an OpenAI-compatible client for DeepSeek's official endpoint, Vitest, React Testing Library, Supertest, Playwright, vanilla CSS Modules and design tokens.
 
 ## Global Constraints
 
@@ -14,8 +14,8 @@
 - The primary category is Apps for Your Life; the product must feel useful before it reveals its critical argument.
 - The first input supports one to five decisions and encourages three to five; only low-stakes, reversible decisions receive recommendations.
 - DeepSeek base URL is exactly `https://api.deepseek.com`; the primary model is exactly `deepseek-v4-pro`.
-- GPT-5.6 model ID is exactly `gpt-5.6`; it performs semantic lineage audit only.
-- Declared You and Proxy You both use DeepSeek V4 Pro so provider differences cannot confound Proxy divergence.
+- The shipped application has one runtime model provider, never calls an OpenAI API endpoint, and never requests `OPENAI_API_KEY`.
+- Declared You and Proxy You both use DeepSeek V4 Pro so model differences cannot confound Proxy divergence.
 - LLMs may propose content but may not authorize actions, mutate provenance, calculate metrics, or expand consent.
 - Message actions remain drafts, calendar actions remain downloadable `.ics` files, and Proxy You never performs external actions.
 - Every delegation increase is explicit, scoped, recorded, and revocable; Manual Mode, Reset, and Delete Profile always work.
@@ -24,9 +24,11 @@
 - No political imagery, real-company imitation, horror glitches, gamification, re-engagement notifications, or fake hard-coded receipt numbers.
 - Demo Profile time jumps are disclosed. Canonical model events are fixtures, while lineage and metrics are recomputed by production code.
 - `.env` is ignored and contains user-supplied secrets; `.env.example` contains names and non-secret defaults only.
+- Build Week evidence must truthfully document how GPT-5.6 in Codex contributed to architecture, implementation, test design, red-team cases, and review, with the real `/feedback` Session ID; it must not imply GPT-5.6 is used at runtime.
+- Before executing implementation tasks, verify GPT-5.6 is selected for the primary Codex task; if the product UI does not expose a verifiable model label, record that limitation instead of inventing evidence.
 - Before frontend code, Build Web Apps requires approved Image Gen concepts for desktop Decision Sweep, desktop Proxy/Receipt, and mobile Decision Sweep.
 - Before final handoff, use the in-app Browser for functional and responsive QA, then compare accepted concept and latest browser screenshots with `view_image`.
-- Official references: [DeepSeek first API call](https://api-docs.deepseek.com/), [DeepSeek JSON Output](https://api-docs.deepseek.com/guides/json_mode/), [GPT-5.6 model](https://developers.openai.com/api/docs/models/gpt-5.6-sol), and [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs).
+- Official references: [DeepSeek first API call](https://api-docs.deepseek.com/), [DeepSeek JSON Output](https://api-docs.deepseek.com/guides/json_mode/), [OpenAI Build Week](https://openai.com/build-week/), and [Devpost requirements](https://openai.devpost.com/).
 
 ---
 
@@ -39,6 +41,7 @@ assets/
     proxy-receipt-desktop.png
     decision-sweep-mobile.png
 docs/
+  build/codex-gpt56-evidence.md
   design/visual-concept.md
   superpowers/specs/2026-07-14-easy-mode-agency-drift-design.md
   superpowers/plans/2026-07-14-easy-mode-agency-drift-web-mvp.md
@@ -75,13 +78,12 @@ src/
     db/schema.sql
     fixtures/demoProfile.ts
     providers/deepseekGateway.ts
-    providers/openaiAuditGateway.ts
     repositories/ledgerRepository.ts
     routes/profileRoutes.ts
     routes/sweepRoutes.ts
     services/actionArtifactService.ts
-    services/auditService.ts
     services/comparisonService.ts
+    services/receiptService.ts
     services/sweepService.ts
   shared/
     apiSchemas.ts
@@ -101,10 +103,10 @@ tests/
   unit/events.test.ts
   unit/lineage.test.ts
   unit/metrics.test.ts
-  unit/openaiAuditGateway.test.ts
   unit/ProxyRevealPage.test.tsx
   unit/projections.test.ts
   unit/ReceiptPage.test.tsx
+  unit/receiptService.test.ts
   unit/replay.test.ts
   unit/risk.test.ts
   unit/SettingsPage.test.tsx
@@ -277,21 +279,17 @@ import { describe, expect, it } from "vitest";
 import { loadConfig } from "../../src/server/config";
 
 describe("loadConfig", () => {
-  it("requires both provider keys and preserves official model defaults", () => {
+  it("requires only the DeepSeek key and preserves official endpoint defaults", () => {
     expect(() => loadConfig({})).toThrow(/DEEPSEEK_API_KEY/);
     const config = loadConfig({
       DEEPSEEK_API_KEY: "deepseek-test",
-      OPENAI_API_KEY: "openai-test",
     });
     expect(config.deepseek).toEqual({
       apiKey: "deepseek-test",
       baseURL: "https://api.deepseek.com",
       model: "deepseek-v4-pro",
     });
-    expect(config.openai).toEqual({
-      apiKey: "openai-test",
-      auditModel: "gpt-5.6",
-    });
+    expect(config).not.toHaveProperty("openai");
   });
 });
 ```
@@ -312,15 +310,12 @@ const EnvSchema = z.object({
   DEEPSEEK_API_KEY: z.string().min(1),
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.literal("deepseek-v4-pro").default("deepseek-v4-pro"),
-  OPENAI_API_KEY: z.string().min(1),
-  OPENAI_AUDIT_MODEL: z.literal("gpt-5.6").default("gpt-5.6"),
   DATABASE_PATH: z.string().default("./data/easy-mode.sqlite"),
   PORT: z.coerce.number().int().positive().default(8787),
 });
 
 export type AppConfig = {
   deepseek: { apiKey: string; baseURL: string; model: "deepseek-v4-pro" };
-  openai: { apiKey: string; auditModel: "gpt-5.6" };
   databasePath: string;
   port: number;
 };
@@ -332,10 +327,6 @@ export function loadConfig(env: NodeJS.ProcessEnv | Record<string, string | unde
       apiKey: parsed.DEEPSEEK_API_KEY,
       baseURL: parsed.DEEPSEEK_BASE_URL,
       model: parsed.DEEPSEEK_MODEL,
-    },
-    openai: {
-      apiKey: parsed.OPENAI_API_KEY,
-      auditModel: parsed.OPENAI_AUDIT_MODEL,
     },
     databasePath: parsed.DATABASE_PATH,
     port: parsed.PORT,
@@ -350,8 +341,6 @@ export function loadConfig(env: NodeJS.ProcessEnv | Record<string, string | unde
 DEEPSEEK_API_KEY=
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-pro
-OPENAI_API_KEY=
-OPENAI_AUDIT_MODEL=gpt-5.6
 DATABASE_PATH=./data/easy-mode.sqlite
 PORT=8787
 ```
@@ -369,7 +358,7 @@ test-results/
 coverage/
 ```
 
-Copy `.env.example` to `.env`, then stop and ask the user to fill `DEEPSEEK_API_KEY` and `OPENAI_API_KEY`. Never display, read back, or commit either value.
+Copy `.env.example` to `.env`, then stop and ask the user to fill `DEEPSEEK_API_KEY`. Never display, read back, or commit the value. Do not add an OpenAI key variable: GPT-5.6 participates through Codex during development, not through the shipped application's runtime.
 
 - [ ] **Step 7: Add the minimal client shell and build configuration**
 
@@ -655,12 +644,12 @@ Expected: FAIL because database, repository, and replay modules do not exist.
 // src/domain/events.ts
 import { z } from "zod";
 
-export const EventActorSchema = z.enum(["human", "deepseek", "gpt-5.6", "proxy", "system"]);
+export const EventActorSchema = z.enum(["human", "deepseek", "proxy", "system"]);
 export const EventTypeSchema = z.enum([
   "sweep_submitted", "decision_parsed", "decision_blocked", "recommendation_generated",
   "alternative_requested", "decision_accepted", "decision_changed", "action_artifact_created",
   "preference_proposed", "preference_confirmed", "preference_rejected", "preference_retracted", "preference_contradicted", "preference_superseded",
-  "consent_granted", "consent_revoked", "proxy_decision_generated", "audit_completed",
+  "consent_granted", "consent_revoked", "proxy_decision_generated",
   "manual_mode_enabled", "profile_reset",
 ]);
 export const DomainEventSchema = z.object({
@@ -796,7 +785,7 @@ it("calculates receipt values from evidence", () => {
       { id: "b", aiOriginated: true, syntheticDepth: 3 },
       { id: "c", aiOriginated: false, syntheticDepth: 0 },
     ],
-    comparisons: [{ declaredOptionId: "x", proxyOptionId: "y" }, { declaredOptionId: "x", proxyOptionId: "x" }],
+    comparisons: [{ diverged: true }, { diverged: false }],
     decisions: [{ humanInitiated: true }, { humanInitiated: false }],
     delegatedDecisions: [{ authorized: true }, { authorized: true }],
   });
@@ -955,7 +944,7 @@ export function getSyntheticDepth(nodeId: string, graph: PreferenceGraph, memo =
 // src/domain/metrics.ts
 export type AgencyDriftInput = {
   usedPreferences: { id: string; aiOriginated: boolean; syntheticDepth: number }[];
-  comparisons: { declaredOptionId: string; proxyOptionId: string }[];
+  comparisons: { diverged: boolean }[];
   decisions: { humanInitiated: boolean }[];
   delegatedDecisions: { authorized: boolean }[];
 };
@@ -966,7 +955,7 @@ export function calculateAgencyDrift(input: AgencyDriftInput) {
   return {
     aiOriginatedPreferenceRatio: ratio(input.usedPreferences.filter((item) => item.aiOriginated).length, input.usedPreferences.length),
     syntheticInheritanceDepth: Math.max(0, ...input.usedPreferences.map((item) => item.syntheticDepth)),
-    proxyDivergence: ratio(input.comparisons.filter((item) => item.declaredOptionId !== item.proxyOptionId).length, input.comparisons.length),
+    proxyDivergence: ratio(input.comparisons.filter((item) => item.diverged).length, input.comparisons.length),
     humanInitiationRatio: ratio(input.decisions.filter((item) => item.humanInitiated).length, input.decisions.length),
     consentCompleteness: ratio(input.delegatedDecisions.filter((item) => item.authorized).length, input.delegatedDecisions.length),
   };
@@ -1229,7 +1218,7 @@ export class SweepService {
     screened.forEach(({ decision, risk }) => this.deps.ledger.append(event(profileId, decision.id, risk.allowed ? "decision_parsed" : "decision_blocked", "system", { decision, risk })));
     const safe = screened.filter((item) => item.risk.allowed).map((item) => item.decision);
     const recommendations = safe.length ? await this.deps.deepseek.recommend(safe, []) : [];
-    recommendations.forEach((recommendation) => this.deps.ledger.append(event(profileId, recommendation.decisionId, "recommendation_generated", "deepseek", { recommendation, usedPreferenceIds: recommendation.usedPreferenceIds })));
+    recommendations.forEach((recommendation) => this.deps.ledger.append(event(profileId, recommendation.decisionId, "recommendation_generated", "deepseek", { recommendation, usedPreferenceIds: recommendation.usedPreferenceIds, humanInitiated: true })));
     return toSweepResponse(sweepId, screened, recommendations);
   }
 }
@@ -1267,7 +1256,7 @@ function toSweepResponse(
 
 `createApp(deps)` must add JSON body limit `32kb`, request IDs, schema validation, `GET /api/health`, the profile routes, sweep routes, one centralized JSON error handler, and Vite static serving in production. Do not load environment variables inside tests; inject dependencies.
 
-`src/server/index.ts` begins with `import "dotenv/config"`, calls `loadConfig(process.env)`, constructs both provider gateways and the SQLite repository, then starts Express. No client file may import `config.ts` or access provider keys.
+`src/server/index.ts` begins with `import "dotenv/config"`, calls `loadConfig(process.env)`, constructs the DeepSeek gateway and SQLite repository, then starts Express. No client file may import `config.ts` or access the DeepSeek key; no OpenAI gateway or OpenAI credential path exists in the runtime composition root.
 
 - [ ] **Step 7: Add acceptance and artifact endpoints**
 
@@ -1459,7 +1448,7 @@ export class ComparisonService {
 }
 ```
 
-The production route must validate Proxy consent before the second call, validate every cited preference ID against the supplied projection, and append one `proxy_decision_generated` event containing both recommendations and their cited IDs.
+The production route must validate Proxy consent before the second call, validate every cited preference ID against the supplied projection, and append one `proxy_decision_generated` event containing both recommendations plus `usedPreferenceIds`, `diverged`, `humanInitiated: false`, `category`, and `requiredConsentLevel: "proxy"`. These normalized fields are the deterministic Receipt Engine contract; no receipt code reparses recommendation prose.
 
 - [ ] **Step 4: Implement the Proxy reveal UI**
 
@@ -1494,157 +1483,185 @@ git commit -m "feat: add Proxy You counterfactual reveal"
 
 Expected: tests PASS. Browser screenshot of the reveal matches the accepted Proxy concept before commit.
 
-## Task 10: Add GPT-5.6 semantic lineage audit and Perfect Consent receipt
+## Task 10: Build the deterministic Perfect Consent receipt
 
 **Files:**
-- Create: `src/server/providers/openaiAuditGateway.ts`
-- Create: `src/server/services/auditService.ts`
+- Create: `src/server/services/receiptService.ts`
 - Create: `src/client/features/receipt/ReceiptPage.tsx`
-- Create: `tests/unit/openaiAuditGateway.test.ts`
+- Create: `tests/unit/receiptService.test.ts`
 - Create: `tests/unit/ReceiptPage.test.tsx`
+- Modify: `src/shared/apiSchemas.ts`
 - Modify: `src/server/routes/profileRoutes.ts`
+- Modify: `src/client/lib/apiClient.ts`
 - Modify: `src/client/app/routes.tsx`
-- Modify: `tests/integration/model-smoke.test.ts`
 
 **Interfaces:**
-- Consumes: decisive preference nodes and ancestry, GPT-5.6 config, deterministic Agency Drift inputs.
-- Produces: `LineageAudit`, validated `audit_completed` event, `GET /api/profiles/:id/receipt`, and receipt UI.
+- Consumes: active ledger events, `buildLineage`, `getSyntheticDepth`, `resolveConsent`, `assertCanDelegate`, and `calculateAgencyDrift`.
+- Produces: `CalculatedReceipt`, `ReceiptResponse`, `calculateReceiptFromEvents(events)`, `ReceiptService.createReceipt(profileId)`, `GET /api/profiles/:id/receipt`, and receipt UI.
 
-- [ ] **Step 1: Write the failing audit validation test**
+- [ ] **Step 1: Write the failing deterministic receipt test**
 
 ```ts
-// tests/unit/openaiAuditGateway.test.ts
-import { expect, it, vi } from "vitest";
-import { OpenAIAuditGateway } from "../../src/server/providers/openaiAuditGateway";
+// tests/unit/receiptService.test.ts
+import { expect, it } from "vitest";
+import type { DomainEvent } from "../../src/domain/events";
+import { calculateReceiptFromEvents } from "../../src/server/services/receiptService";
 
-it("rejects audit citations not present in the supplied lineage", async () => {
-  const parse = vi.fn().mockResolvedValue({ output_parsed: { findings: [{ preferenceId: "unknown", classification: "ai_recursive", citedEventIds: [], explanation: "Unsupported" }], summary: "Invalid" } });
-  const gateway = new OpenAIAuditGateway({ model: "gpt-5.6", parse });
-  await expect(gateway.audit({ preferences: [{ id: "known", sourceEventIds: ["event-1"] }] as never, events: [] })).rejects.toThrow(/unknown preference/i);
+const profileId = "00000000-0000-4000-8000-000000000001";
+const preferenceId = "00000000-0000-4000-8000-000000000010";
+const preferenceEventId = "00000000-0000-4000-8000-000000000100";
+const consentId = "00000000-0000-4000-8000-000000000300";
+const consentEventId = "00000000-0000-4000-8000-000000000301";
+
+const events: DomainEvent[] = [
+  { id: preferenceEventId, profileId, aggregateId: preferenceId, type: "preference_proposed", actor: "system", occurredAt: "2026-07-14T00:00:00.000Z", payload: { preference: { id: preferenceId, proposition: "Prefers completion under pressure", category: "scheduling", sourceType: "accepted_ai_recommendation", sourceEventIds: [preferenceEventId], parentPreferenceIds: [], confidence: 0.8, status: "active" } } },
+  { id: consentEventId, profileId, aggregateId: consentId, type: "consent_granted", actor: "human", occurredAt: "2026-07-14T00:01:00.000Z", payload: { consent: { id: consentId, profileId, category: "scheduling", level: "proxy", grantedAt: "2026-07-14T00:01:00.000Z", revokedAt: null, sourceEventId: consentEventId } } },
+  { id: "00000000-0000-4000-8000-000000000401", profileId, aggregateId: "00000000-0000-4000-8000-000000000200", type: "recommendation_generated", actor: "deepseek", occurredAt: "2026-07-14T00:02:00.000Z", payload: { usedPreferenceIds: [preferenceId], humanInitiated: true } },
+  { id: "00000000-0000-4000-8000-000000000402", profileId, aggregateId: "00000000-0000-4000-8000-000000000201", type: "proxy_decision_generated", actor: "proxy", occurredAt: "2026-07-14T00:03:00.000Z", payload: { usedPreferenceIds: [preferenceId], humanInitiated: false, diverged: true, category: "scheduling", requiredConsentLevel: "proxy" } },
+];
+
+it("derives metrics and cited lineage evidence without any model call", () => {
+  const receipt = calculateReceiptFromEvents(events);
+  expect(receipt.metrics).toEqual({ aiOriginatedPreferenceRatio: 1, syntheticInheritanceDepth: 1, proxyDivergence: 1, humanInitiationRatio: 0.5, consentCompleteness: 1, unauthorizedDecisionCount: 0 });
+  expect(receipt.evidence[0]).toMatchObject({ preferenceId, sourceType: "accepted_ai_recommendation", sourceEventIds: [preferenceEventId], usedByDecisionIds: ["00000000-0000-4000-8000-000000000200", "00000000-0000-4000-8000-000000000201"] });
 });
 ```
 
 - [ ] **Step 2: Run the test to verify failure**
 
-Run: `npm test -- tests/unit/openaiAuditGateway.test.ts`
+Run: `npm test -- tests/unit/receiptService.test.ts`
 
-Expected: FAIL because the audit gateway does not exist.
+Expected: FAIL because `receiptService.ts` does not exist.
 
-- [ ] **Step 3: Implement GPT-5.6 Structured Outputs**
+- [ ] **Step 3: Implement receipt calculation from ledger evidence**
 
 ```ts
-// src/server/providers/openaiAuditGateway.ts
-import OpenAI from "openai";
-import { zodTextFormat } from "openai/helpers/zod";
-import { z } from "zod";
+// src/server/services/receiptService.ts
+import { assertCanDelegate, resolveConsent } from "../../domain/consent";
 import type { DomainEvent } from "../../domain/events";
-import type { PreferenceNode } from "../../shared/domainSchemas";
+import { buildLineage, getSyntheticDepth, type PreferenceGraph } from "../../domain/lineage";
+import { calculateAgencyDrift } from "../../domain/metrics";
+import { replayProfile } from "../../domain/replay";
+import type { ReceiptResponse } from "../../shared/apiSchemas";
+import type { ConsentGrant, PreferenceNode } from "../../shared/domainSchemas";
+import type { LedgerRepository } from "../repositories/ledgerRepository";
 
-const LineageAuditSchema = z.object({
-  findings: z.array(z.object({
-    preferenceId: z.string(),
-    classification: z.enum(["human_supported", "ai_recursive", "contradicted", "insufficient_evidence"]),
-    citedEventIds: z.array(z.string()),
-    explanation: z.string().min(1).max(240),
-  })),
-  summary: z.string().min(1).max(320),
-});
-export type LineageAudit = z.infer<typeof LineageAuditSchema>;
-type ParseResponse = (request: Record<string, unknown>) => Promise<{ output_parsed: LineageAudit | null }>;
+export type ReceiptMetrics = ReceiptResponse["metrics"];
+export type LineageEvidence = ReceiptResponse["evidence"][number];
+export type CalculatedReceipt = Omit<ReceiptResponse, "calculatedAt">;
 
-export class OpenAIAuditGateway {
-  constructor(private input: { model: "gpt-5.6"; parse: ParseResponse }) {}
+const aiSources = new Set<PreferenceNode["sourceType"]>(["accepted_ai_recommendation", "proxy_generated", "derived_from_preferences"]);
 
-  static fromConfig(config: { apiKey: string; auditModel: "gpt-5.6" }) {
-    const client = new OpenAI({ apiKey: config.apiKey });
-    return new OpenAIAuditGateway({ model: config.auditModel, parse: client.responses.parse.bind(client.responses) as ParseResponse });
+function ancestryContainsAi(nodeId: string, graph: PreferenceGraph, seen = new Set<string>()): boolean {
+  if (seen.has(nodeId)) return false;
+  seen.add(nodeId);
+  const node = graph.nodes.get(nodeId);
+  if (!node) return false;
+  return aiSources.has(node.sourceType) || node.parentPreferenceIds.some((parentId) => ancestryContainsAi(parentId, graph, seen));
+}
+
+function isAuthorized(events: readonly DomainEvent[], eventIndex: number, event: DomainEvent): boolean {
+  const category = String(event.payload.category) as ConsentGrant["category"];
+  const required = String(event.payload.requiredConsentLevel) as ConsentGrant["level"];
+  try {
+    assertCanDelegate(required, resolveConsent(events.slice(0, eventIndex + 1), category));
+    return true;
+  } catch {
+    return false;
   }
+}
 
-  async audit(input: { preferences: PreferenceNode[]; events: DomainEvent[] }): Promise<LineageAudit> {
-    const response = await this.input.parse({
-      model: this.input.model,
-      reasoning: { effort: "medium" },
-      input: [
-        { role: "system", content: "Audit semantic support only. Classify each decisive preference. Cite only supplied preference and event IDs. Do not calculate metrics or reveal chain-of-thought." },
-        { role: "user", content: JSON.stringify(input) },
-      ],
-      text: { format: zodTextFormat(LineageAuditSchema, "lineage_audit") },
-    });
-    const audit = LineageAuditSchema.parse(response.output_parsed);
-    const preferenceIds = new Set(input.preferences.map((item) => item.id));
-    const eventIds = new Set(input.events.map((item) => item.id));
-    for (const finding of audit.findings) {
-      if (!preferenceIds.has(finding.preferenceId)) throw new Error(`Audit cited unknown preference ${finding.preferenceId}`);
-      if (finding.citedEventIds.some((id) => !eventIds.has(id))) throw new Error("Audit cited unknown event");
-    }
-    return audit;
+export function calculateReceiptFromEvents(events: readonly DomainEvent[]): CalculatedReceipt {
+  const active = replayProfile(events).activeEvents;
+  const graph = buildLineage(active);
+  const evaluated = active.filter((event) => event.type === "recommendation_generated" || event.type === "proxy_decision_generated");
+  const delegated = active.filter((event) => event.type === "proxy_decision_generated");
+  const usedIds = [...new Set(evaluated.flatMap((event) => (event.payload.usedPreferenceIds as string[] | undefined) ?? []))];
+  const usedNodes = usedIds.map((id) => graph.nodes.get(id)).filter((node): node is PreferenceNode => node?.status === "active");
+  const delegatedDecisions = delegated.map((event) => ({ authorized: isAuthorized(active, active.indexOf(event), event) }));
+  const base = calculateAgencyDrift({
+    usedPreferences: usedNodes.map((node) => ({ id: node.id, aiOriginated: ancestryContainsAi(node.id, graph), syntheticDepth: getSyntheticDepth(node.id, graph) })),
+    comparisons: delegated.map((event) => ({ diverged: event.payload.diverged === true })),
+    decisions: evaluated.map((event) => ({ humanInitiated: event.payload.humanInitiated === true })),
+    delegatedDecisions,
+  });
+  return {
+    metrics: { ...base, unauthorizedDecisionCount: delegatedDecisions.filter((item) => !item.authorized).length },
+    evidence: usedNodes.map((node) => ({ preferenceId: node.id, proposition: node.proposition, sourceType: node.sourceType, sourceEventIds: [...node.sourceEventIds], parentPreferenceIds: [...node.parentPreferenceIds], usedByDecisionIds: [...(graph.usedBy.get(node.id) ?? [])], syntheticDepth: getSyntheticDepth(node.id, graph) })),
+  };
+}
+
+export class ReceiptService {
+  constructor(private ledger: Pick<LedgerRepository, "list">) {}
+  createReceipt(profileId: string, calculatedAt = new Date().toISOString()): ReceiptResponse {
+    return { ...calculateReceiptFromEvents(this.ledger.list(profileId)), calculatedAt };
   }
 }
 ```
 
-- [ ] **Step 4: Combine semantic audit with deterministic receipt calculation**
+The receipt is a read-only projection: it appends no event, invokes no provider, and can be deleted and recomputed from the ledger with identical metrics.
 
-`AuditService.createReceipt(profileId)` replays active events, builds the graph, selects decisive lineages from stored comparison events, calls GPT-5.6 once, validates citations, appends `audit_completed`, calculates metrics with `calculateAgencyDrift`, and returns:
+- [ ] **Step 4: Implement receipt UI and its failing component test**
 
-```ts
-type ReceiptResponse = {
-  metrics: {
-    aiOriginatedPreferenceRatio: number;
-    syntheticInheritanceDepth: number;
-    proxyDivergence: number;
-    humanInitiationRatio: number;
-    consentCompleteness: number;
-    unauthorizedDecisionCount: number;
-  };
-  audit: LineageAudit;
-  calculatedAt: string;
-};
-```
-
-Implement and export `calculateReceiptFromEvents(events)` as the pure deterministic half of `AuditService`. It derives consent authorization, used-preference ancestry, synthetic depth, human initiation, and stored Declared/Proxy comparisons, then calls `calculateAgencyDrift`. `AuditService.createReceipt` adds the separately validated GPT-5.6 semantic audit to that result.
-
-Its exact public contract is:
+Add the response contract next to the earlier API schemas, extending that file's domain-schema import with `PreferenceSourceSchema`:
 
 ```ts
-export type CalculatedReceipt = Omit<ReceiptResponse, "audit" | "calculatedAt">;
-export function calculateReceiptFromEvents(events: readonly DomainEvent[]): CalculatedReceipt;
+// src/shared/apiSchemas.ts
+export const ReceiptResponseSchema = z.object({
+  metrics: z.object({
+    aiOriginatedPreferenceRatio: z.number().min(0).max(1),
+    syntheticInheritanceDepth: z.number().int().nonnegative(),
+    proxyDivergence: z.number().min(0).max(1),
+    humanInitiationRatio: z.number().min(0).max(1),
+    consentCompleteness: z.number().min(0).max(1),
+    unauthorizedDecisionCount: z.number().int().nonnegative(),
+  }),
+  evidence: z.array(z.object({
+    preferenceId: z.string().uuid(),
+    proposition: z.string().min(1),
+    sourceType: PreferenceSourceSchema,
+    sourceEventIds: z.array(z.string().uuid()).min(1),
+    parentPreferenceIds: z.array(z.string().uuid()),
+    usedByDecisionIds: z.array(z.string().uuid()),
+    syntheticDepth: z.number().int().nonnegative(),
+  })),
+  calculatedAt: z.string().datetime(),
+});
+export type ReceiptResponse = z.infer<typeof ReceiptResponseSchema>;
 ```
-
-`unauthorizedDecisionCount` is derived from consent events and must equal zero in Demo Profile. GPT-5.6 never supplies this number.
-
-- [ ] **Step 5: Implement receipt UI and its failing test**
 
 ```tsx
 // tests/unit/ReceiptPage.test.tsx
-it("labels calculated system metrics without diagnosing the user", () => {
-  const receipt = { metrics: { aiOriginatedPreferenceRatio: 0.73, syntheticInheritanceDepth: 3, proxyDivergence: 0.68, humanInitiationRatio: 0.11, consentCompleteness: 1, unauthorizedDecisionCount: 0 }, audit: { findings: [], summary: "Most decisive preferences inherit AI-authored evidence." }, calculatedAt: "2026-07-14T00:00:00.000Z" } as never;
+import { render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
+import { ReceiptPage } from "../../src/client/features/receipt/ReceiptPage";
+
+it("renders calculated metrics and their inspectable ledger evidence", () => {
+  const receipt = { metrics: { aiOriginatedPreferenceRatio: 0.73, syntheticInheritanceDepth: 3, proxyDivergence: 0.68, humanInitiationRatio: 0.11, consentCompleteness: 1, unauthorizedDecisionCount: 0 }, evidence: [{ preferenceId: "p1", proposition: "Prefers completion", sourceType: "accepted_ai_recommendation", sourceEventIds: ["e1"], parentPreferenceIds: [], usedByDecisionIds: ["d1"], syntheticDepth: 1 }], calculatedAt: "2026-07-14T00:00:00.000Z" } as never;
   render(<ReceiptPage receipt={receipt} />);
   expect(screen.getByText("Consent completeness")).toBeVisible();
   expect(screen.getByText("100%")).toBeVisible();
+  expect(screen.getByText("Prefers completion")).toBeVisible();
   expect(screen.getByText(/system-recorded behavior/i)).toBeVisible();
   expect(screen.queryByText(/you have lost autonomy/i)).not.toBeInTheDocument();
 });
 ```
 
-The visible values are formatted from the API response, never copied from concept-image text.
+Implement `GET /api/profiles/:id/receipt` with `ReceiptService.createReceipt`, parse the response in `apiClient.ts`, and render every visible percentage from the API response. The lineage evidence disclosure uses stored IDs and source types verbatim; it never presents model-generated audit prose.
 
-- [ ] **Step 6: Extend the credential-gated smoke test**
-
-Add one GPT-5.6 audit call against a two-node fictional lineage and assert `LineageAuditSchema`. Run only after the user has filled `OPENAI_API_KEY` and confirms a small paid request.
-
-- [ ] **Step 7: Run, visually compare, and commit**
+- [ ] **Step 5: Run, visually compare, and commit**
 
 Run:
 
 ```bash
-npm test -- tests/unit/openaiAuditGateway.test.ts tests/unit/ReceiptPage.test.tsx
+npm test -- tests/unit/receiptService.test.ts tests/unit/ReceiptPage.test.tsx
 npm run typecheck
 npm run build
-git add src/server/providers/openaiAuditGateway.ts src/server/services/auditService.ts src/server/routes/profileRoutes.ts src/client/features/receipt src/client/app/routes.tsx tests
-git commit -m "feat: add GPT-5.6 lineage audit and receipt"
+git add src/shared/apiSchemas.ts src/server/services/receiptService.ts src/server/routes/profileRoutes.ts src/client/lib/apiClient.ts src/client/features/receipt src/client/app/routes.tsx tests/unit/receiptService.test.ts tests/unit/ReceiptPage.test.tsx
+git commit -m "feat: add deterministic Perfect Consent receipt"
 ```
 
-Expected: unit tests PASS. With explicit user authorization, `RUN_MODEL_SMOKE=1 npm run smoke:models` passes for both providers.
+Expected: unit tests PASS; no OpenAI endpoint, credential, provider class, or network call exists in the receipt path.
 
 ## Task 11: Add Demo Profile, consent ladder, settings, and exit stinger
 
@@ -1668,7 +1685,7 @@ Expected: unit tests PASS. With explicit user authorization, `RUN_MODEL_SMOKE=1 
 import { expect, it } from "vitest";
 import { createDemoProfileEvents } from "../../src/server/fixtures/demoProfile";
 import { buildLineage, getSyntheticDepth } from "../../src/domain/lineage";
-import { calculateReceiptFromEvents } from "../../src/server/services/auditService";
+import { calculateReceiptFromEvents } from "../../src/server/services/receiptService";
 
 it("replays a three-level synthetic lineage with perfect consent", () => {
   const events = createDemoProfileEvents("2026-07-14T00:00:00.000Z");
@@ -1691,7 +1708,7 @@ Expected: FAIL because the fixture does not exist.
 
 - [ ] **Step 3: Implement canonical, disclosed fixture history**
 
-`createDemoProfileEvents(anchor)` must return validated events for Day 1, Day 3, and Day 14 with fictional Alex data, at least three accepted DeepSeek recommendations, explicit Recommend→Preselect→Proxy grants, one three-level AI-derived preference chain, canonical GPT audit output, and zero unauthorized decisions. The event counts must recompute to the design's rounded display targets: 73% AI-originated preferences, 68% Proxy divergence, 11% human initiation, and 100% consent completeness. Event IDs must be deterministic UUID constants so screenshots and tests remain stable. The fixture stores events only; it must not store receipt percentages.
+`createDemoProfileEvents(anchor)` must return validated events for Day 1, Day 3, and Day 14 with fictional Alex data, at least three accepted DeepSeek recommendations, explicit Recommend→Preselect→Proxy grants, one three-level AI-derived preference chain, and zero unauthorized decisions. The event counts must recompute to the design's rounded display targets: 73% AI-originated preferences, 68% Proxy divergence, 11% human initiation, and 100% consent completeness. Event IDs must be deterministic UUID constants so screenshots and tests remain stable. The fixture stores events only; it must not store receipt percentages or model-authored audit prose.
 
 The Demo Profile API response includes `{ mode: "demo", datesAreSimulated: true }`. Fresh Profile returns `{ mode: "fresh", datesAreSimulated: false }`.
 
@@ -1747,13 +1764,14 @@ Expected: fixture metrics are deterministic; the user can always exit, reset, re
 - Create: `Dockerfile`
 - Create: `.dockerignore`
 - Create: `README.md`
+- Create: `docs/build/codex-gpt56-evidence.md`
 - Create: `docs/qa/fidelity-ledger.md`
 - Create: `docs/demo/three-minute-script.md`
 - Modify: `src/server/app.ts`
 
 **Interfaces:**
 - Consumes: complete app, accepted concepts, and all automated test suites.
-- Produces: reproducible judge setup, production container, verified core flow, visual fidelity evidence, and a sub-three-minute narration.
+- Produces: reproducible judge setup, production container, verified core flow, truthful Codex/GPT-5.6 build evidence, visual fidelity evidence, and a sub-three-minute narration.
 
 - [ ] **Step 1: Write the full browser test**
 
@@ -1805,7 +1823,19 @@ CMD ["node", "dist/server/index.js"]
 
 The production image uses the `tsup` server bundle from Task 2 and never depends on the development-only `tsx` package.
 
-- [ ] **Step 4: Write judge-facing README**
+- [ ] **Step 4: Capture verifiable Codex and GPT-5.6 build evidence**
+
+Retrieve the real `/feedback` Session ID for the Codex task containing the majority of core implementation. Create `docs/build/codex-gpt56-evidence.md` with:
+
+1. The verified Session ID and the visible model label, or an explicit note that the UI did not expose a verifiable label.
+2. A runtime boundary statement: DeepSeek V4 Pro is the sole shipped model; the application has no OpenAI API credential or endpoint.
+3. A contribution table with rows for architecture, implementation, test design, red-team cases, and review. Each row cites concrete commits, files, or test cases produced with Codex rather than generic claims.
+4. The material human decisions, including the decision to reject an unnecessary GPT-5.6 runtime audit integration.
+5. A reproducibility note linking the repository commands and the submission's `/feedback` field.
+
+Before saving, verify every cited commit with `git show --stat <commit>` and every cited file with `test -f <path>`. Do not quote hidden reasoning, private prompts, API keys, or unrelated task content.
+
+- [ ] **Step 5: Write judge-facing README**
 
 The README must contain, in this order:
 
@@ -1813,14 +1843,14 @@ The README must contain, in this order:
 2. 60-second local setup with `npm ci`, `.env`, `npm run dev`.
 3. Exact environment variables without values.
 4. Fresh Profile and Demo Profile test paths.
-5. Architecture diagram showing DeepSeek primary flow, GPT-5.6 auditor, deterministic ledger/metrics.
-6. How Codex was used, including the actual `/feedback` session ID retrieved before the README commit.
-7. How GPT-5.6 is used substantively for independent semantic lineage audit.
-8. Why DeepSeek V4 Pro drives both Declared You and Proxy You.
-9. Safety and privacy boundaries.
+5. Architecture diagram showing DeepSeek as the sole runtime model plus deterministic ledger, lineage, consent, and metrics.
+6. How GPT-5.6 in Codex was used to build the project, including the actual `/feedback` Session ID and a link to `docs/build/codex-gpt56-evidence.md`.
+7. An explicit statement that GPT-5.6 is build tooling, not a runtime API dependency.
+8. Why DeepSeek V4 Pro drives Decision Sweep, Declared You, and Proxy You.
+9. Safety and privacy boundaries, including the single-provider data path.
 10. Automated test commands and expected scope.
 
-- [ ] **Step 5: Run all automated verification**
+- [ ] **Step 6: Run all automated verification**
 
 Run:
 
@@ -1834,7 +1864,7 @@ docker build -t easy-mode-agency-drift .
 
 Expected: all unit/integration/e2e tests PASS; typecheck/build exit 0; container builds and `/api/health` returns 200.
 
-- [ ] **Step 6: Perform Build Web Apps visual verification**
+- [ ] **Step 7: Perform Build Web Apps visual verification**
 
 Use the in-app Browser first. Verify:
 
@@ -1846,7 +1876,7 @@ Use the in-app Browser first. Verify:
 
 Capture the latest browser screenshots. Use `view_image` on each accepted concept and corresponding implementation screenshot in the same QA pass.
 
-- [ ] **Step 7: Write the fidelity ledger**
+- [ ] **Step 8: Write the fidelity ledger**
 
 Create `docs/qa/fidelity-ledger.md` with at least these comparison rows:
 
@@ -1865,7 +1895,7 @@ Create `docs/qa/fidelity-ledger.md` with at least these comparison rows:
 
 Fill every cell with concrete evidence. No row may remain empty at handoff.
 
-- [ ] **Step 8: Write and time the three-minute script**
+- [ ] **Step 9: Write and time the three-minute script**
 
 Create `docs/demo/three-minute-script.md` following the approved timing:
 
@@ -1875,19 +1905,19 @@ Create `docs/demo/three-minute-script.md` following the approved timing:
 - 1:10–1:35 disclosed time jump
 - 1:35–2:02 Proxy You climax
 - 2:02–2:28 counterfactual and Perfect Consent
-- 2:28–2:47 technical proof: DeepSeek V4 Pro, GPT-5.6 audit, deterministic ledger, and Codex
+- 2:28–2:47 technical proof: DeepSeek V4 Pro runtime, deterministic ledger/lineage/consent, and verified GPT-5.6-in-Codex build evidence
 - 2:47–3:00 exit stinger
 
 Record a rehearsal and ensure spoken duration is at most 175 seconds, preserving five seconds of upload/editing margin.
 
-- [ ] **Step 9: Final verification and commit**
+- [ ] **Step 10: Final verification and commit**
 
 Run:
 
 ```bash
 git diff --check
 git status --short
-git add tests/e2e tests/integration/safety.test.ts Dockerfile .dockerignore README.md docs/qa docs/demo src/server/app.ts
+git add tests/e2e tests/integration/safety.test.ts Dockerfile .dockerignore README.md docs/build docs/qa docs/demo src/server/app.ts
 git commit -m "docs: prepare Easy Mode judge handoff"
 git status --short
 ```
@@ -1898,7 +1928,7 @@ Expected: no whitespace errors; final status clean; README accurately matches th
 
 ## Execution handoff
 
-Plan execution must begin with Task 1 and stop for visual approval before Task 2. Task 6 stops once for the user to fill `.env` and approve small provider smoke calls. Every later task uses mocked or fixture providers by default so tests do not spend tokens accidentally.
+Plan execution must begin with Task 1 and stop for visual approval before Task 2. Task 6 stops once for the user to fill `.env` and approve one small DeepSeek smoke call. Every later task uses mocked or fixture providers by default so tests do not spend tokens accidentally.
 
 Two execution options:
 

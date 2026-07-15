@@ -70,8 +70,8 @@ Public English copy uses **Agency Drift** rather than “alienation” to keep t
 - Demonstrate how AI-authored preferences can recursively influence later decisions.
 - Contrast a user-declared model with the evolved Proxy You model.
 - Record explicit consent for every increase in delegation.
-- Use DeepSeek V4 Pro for the primary decision workflow and GPT-5.6 for an independent semantic audit of preference provenance.
-- Produce a compelling three-minute demo without hiding time jumps or fabricating audit values.
+- Use DeepSeek V4 Pro as the sole runtime model, while documenting how GPT-5.6 in Codex was used to design, build, test, and review the project.
+- Produce a compelling three-minute demo without hiding time jumps or fabricating receipt values.
 - Keep the satire nonpolitical, calm, mechanically polite, and grounded in actual system state.
 
 ### 3.2 Non-goals
@@ -301,15 +301,13 @@ These are application metrics, not validated psychological measurements. The UI 
 
 ### 6.5 Deterministic and model responsibilities
 
-DeepSeek V4 Pro is the primary product model. It may:
+DeepSeek V4 Pro is the product's sole runtime model. It may:
 
 - Parse messy text into candidate decisions.
 - Propose options, recommendations, and concise rationales.
 - Extract candidate preference propositions.
 - Produce a Proxy You decision from an explicitly supplied preference set.
 - Produce the Declared You comparison from its restricted preference set.
-
-GPT-5.6 is an independent semantic lineage auditor. It receives a bounded decision, the decisive preference nodes, and their ancestry, then classifies each claim as `human_supported`, `ai_recursive`, `contradicted`, or `insufficient_evidence`. It also produces one concise audit finding for the reveal. It does not generate the primary recommendation, alter the graph, grant consent, or calculate metrics.
 
 Application code must:
 
@@ -320,10 +318,9 @@ Application code must:
 - Build lineage edges.
 - Calculate all drift metrics.
 - Generate the Perfect Consent receipt from stored events.
-- Validate GPT-5.6 audit citations against the same stored event and preference IDs.
 - Prevent external actions without human confirmation.
 
-No LLM may decide whether its own action was authorized, mutate provenance, or calculate its own compliance score. Declared You and Proxy You both use DeepSeek V4 Pro so their divergence is not confounded by comparing different model providers.
+No LLM may decide whether its own action was authorized, mutate provenance, or calculate its own compliance score. Declared You and Proxy You both use DeepSeek V4 Pro, and every reveal is derived from the same locally stored event graph.
 
 ## 7. System architecture
 
@@ -331,7 +328,7 @@ No LLM may decide whether its own action was authorized, mutate provenance, or c
 
 The MVP is a single-user, browser-first TypeScript application with server-side model calls and a small relational store. A local or single-container SQLite database is sufficient for the hackathon build. The storage boundary should permit a later move to Postgres without changing domain logic.
 
-The DeepSeek and OpenAI API keys remain server-side. DeepSeek uses the official OpenAI-compatible endpoint `https://api.deepseek.com` with model ID `deepseek-v4-pro`; GPT-5.6 uses the OpenAI Responses API with model ID `gpt-5.6`. DeepSeek is instructed to return JSON and the application validates it with Zod; GPT-5.6 uses Structured Outputs. UI prose is rendered from validated fields rather than parsed from free-form Markdown.
+The DeepSeek API key remains server-side. DeepSeek uses the official OpenAI-compatible endpoint `https://api.deepseek.com` with model ID `deepseek-v4-pro`. It is instructed to return JSON and the application validates every response with Zod. UI prose is rendered from validated fields rather than parsed from free-form Markdown. The shipped application does not call the OpenAI API and does not require an OpenAI API key.
 
 ### 7.2 Components
 
@@ -345,9 +342,8 @@ The DeepSeek and OpenAI API keys remain server-side. DeepSeek uses the official 
 8. **Consent Controller** — validates category, level, time, and revocation state before delegation.
 9. **Projection Builder** — constructs Declared You and Proxy You context packages.
 10. **Counterfactual Comparator** — runs both projections on fixed scenarios and stores their divergence.
-11. **Independent Audit Engine** — asks GPT-5.6 to classify the semantic support for decisive preference claims, then validates every cited node and event ID.
-12. **Receipt Engine** — computes Agency Drift and Perfect Consent metrics.
-13. **Demo Timeline Loader** — loads a disclosed, pre-seeded event history and replays it through the same engines used for live data.
+11. **Receipt Engine** — computes Agency Drift and Perfect Consent metrics directly from validated ledger events and preference ancestry.
+12. **Demo Timeline Loader** — loads a disclosed, pre-seeded event history and replays it through the same engines used for live data.
 
 ### 7.3 Data flow
 
@@ -362,14 +358,13 @@ The DeepSeek and OpenAI API keys remain server-side. DeepSeek uses the official 
 9. Consent Controller records any explicit delegation grant.
 10. At the climax, Projection Builder prepares Declared You and Proxy You contexts.
 11. Counterfactual Comparator runs the same fixed decisions through both projections.
-12. Independent Audit Engine asks GPT-5.6 to audit the decisive lineages and validates its citations.
-13. Receipt Engine calculates metrics from the resulting event and lineage graph.
+12. Receipt Engine calculates metrics and evidence summaries from the resulting event and lineage graph.
 
 ### 7.4 Demo history integrity
 
 The three-minute video cannot wait for real weeks of history. The app includes a clearly labeled **Demo Profile** containing pre-seeded events across multiple dates. Time jumps are visible in the interface and narration.
 
-The seeded input and canonical model-output events are fixtures so the video remains repeatable. Their preference graph, projection filters, divergence count, and receipt metrics are calculated by production code at runtime. Audit numbers are never hard-coded screenshots. A separate **Re-run live** control may call the model again and append a new comparison result, which is allowed to differ from the canonical replay.
+The seeded input and canonical model-output events are fixtures so the video remains repeatable. Their preference graph, projection filters, divergence count, and receipt metrics are calculated by production code at runtime. Receipt numbers are never hard-coded screenshots. A separate **Re-run live** control may call the model again and append a new comparison result, which is allowed to differ from the canonical replay.
 
 Judges can reset to a Fresh Profile and perform a live Decision Sweep independently.
 
@@ -403,7 +398,7 @@ Unsupported inputs receive a concise boundary message and may be reframed into q
 ### 8.4 Consent and exit
 
 - Consent grants are explicit, scoped, recorded, and revocable.
-- Revocation immediately removes the relevant preferences from Proxy You's allowed context, while preserving the historical audit event.
+- Revocation immediately removes the relevant preferences from Proxy You's allowed context, while preserving the historical ledger event.
 - Manual Mode and Delete Profile remain reachable outside the satirical exit dialogue.
 - Reset appends a reset boundary and begins a new projection without the old history; Delete Profile physically removes the profile and its ledger.
 - The app does not send re-engagement notifications or optimize engagement duration.
@@ -412,7 +407,7 @@ Unsupported inputs receive a concise boundary message and may be reframed into q
 
 - The default demo uses fictional data.
 - Fresh Profile data is isolated to one local/demo account.
-- Only context needed for the current operation is sent to DeepSeek or OpenAI, and the UI discloses the two-provider architecture.
+- Only context needed for the current operation is sent to DeepSeek; the OpenAI API receives no user or demo-profile data.
 - The UI explains what is stored and provides Reset/Delete controls.
 - User data is not represented as training a base model.
 
@@ -567,7 +562,7 @@ Run the same decision through Declared You and Proxy You. Show their divergence,
 
 ### 2:28–2:47 — Technical proof
 
-Briefly show the event timeline, preference lineage, structured model output, and deterministic metric calculation. Explain that DeepSeek V4 Pro powers Decision Sweep and both user projections, GPT-5.6 independently audits the decisive lineage, and application code enforces lineage and consent. Mention Codex's role in building and testing the system.
+Briefly show the event timeline, preference lineage, structured DeepSeek output, and deterministic metric calculation. Explain that DeepSeek V4 Pro is the sole runtime model, while GPT-5.6 in Codex was used for architecture, implementation, test design, red-team cases, and review. Show the real `/feedback` Session ID and keep runtime model use separate from build-process evidence.
 
 ### 2:47–3:00 — Exit stinger
 
