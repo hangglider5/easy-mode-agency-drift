@@ -4,18 +4,18 @@
 
 **Goal:** Build a browser-first Easy Mode MVP that closes low-stakes decisions, records preference provenance, demonstrates Proxy You agency drift, and produces a calculated Perfect Consent reveal.
 
-**Architecture:** A React + Vite client talks to an Express API backed by an append-only SQLite decision ledger. DeepSeek V4 Pro is the sole runtime model for parsing, recommendation, preference proposals, and both user projections; deterministic TypeScript enforces safety, consent, provenance, replay, lineage evidence, and metrics. GPT-5.6 is used through Codex during development and is documented as build-process evidence rather than shipped as an API dependency.
+**Architecture:** A React + Vite client talks to an Express API backed by an append-only SQLite decision ledger. DeepSeek V4 Pro, pinned to OpenRouter model route `deepseek/deepseek-v4-pro`, is the sole runtime model for parsing, recommendation, preference proposals, and both user projections; deterministic TypeScript enforces safety, consent, provenance, replay, lineage evidence, and metrics. GPT-5.6 is used through Codex during development and is documented as build-process evidence rather than shipped as an API dependency.
 
-**Tech Stack:** Node.js 22+, TypeScript, React 19, Vite, Express, SQLite via `better-sqlite3`, Zod, the `openai` JavaScript SDK configured only as an OpenAI-compatible client for DeepSeek's official endpoint, Vitest, React Testing Library, Supertest, Playwright, vanilla CSS Modules and design tokens.
+**Tech Stack:** Node.js 22+, TypeScript, React 19, Vite, Express, SQLite via `better-sqlite3`, Zod, the `openai` JavaScript SDK configured only as an OpenAI-compatible transport for OpenRouter, Vitest, React Testing Library, Supertest, Playwright, vanilla CSS Modules and design tokens.
 
 ## Global Constraints
 
 - The repository root is `/Users/kennyliang/CodexProjects/OpenAI Build Week/easy-mode-agency-drift`.
 - The primary category is Apps for Your Life; the product must feel useful before it reveals its critical argument.
 - The first input supports one to five decisions and encourages three to five; only low-stakes, reversible decisions receive recommendations.
-- DeepSeek base URL is exactly `https://api.deepseek.com`; the primary model is exactly `deepseek-v4-pro`.
+- OpenRouter base URL is exactly `https://openrouter.ai/api/v1`; the primary model route is exactly `deepseek/deepseek-v4-pro`.
 - The shipped application has one runtime model provider, never calls an OpenAI API endpoint, and never requests `OPENAI_API_KEY`.
-- Declared You and Proxy You both use DeepSeek V4 Pro so model differences cannot confound Proxy divergence.
+- Declared You and Proxy You both use the same OpenRouter-routed DeepSeek V4 Pro model so model differences cannot confound Proxy divergence.
 - LLMs may propose content but may not authorize actions, mutate provenance, calculate metrics, or expand consent.
 - Message actions remain drafts, calendar actions remain downloadable `.ics` files, and Proxy You never performs external actions.
 - Every delegation increase is explicit, scoped, recorded, and revocable; Manual Mode, Reset, and Delete Profile always work.
@@ -28,7 +28,7 @@
 - Before executing implementation tasks, verify GPT-5.6 is selected for the primary Codex task; if the product UI does not expose a verifiable model label, record that limitation instead of inventing evidence.
 - Before frontend code, Build Web Apps requires approved Image Gen concepts for desktop Decision Sweep, desktop Proxy/Receipt, and mobile Decision Sweep.
 - Before final handoff, use the in-app Browser for functional and responsive QA, then compare accepted concept and latest browser screenshots with `view_image`.
-- Official references: [DeepSeek first API call](https://api-docs.deepseek.com/), [DeepSeek JSON Output](https://api-docs.deepseek.com/guides/json_mode/), [OpenAI Build Week](https://openai.com/build-week/), and [Devpost requirements](https://openai.devpost.com/).
+- Official references: [OpenRouter API overview](https://openrouter.ai/docs/api/reference/overview), [OpenRouter structured outputs](https://openrouter.ai/docs/guides/features/structured-outputs), [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection), [DeepSeek V4 Pro on OpenRouter](https://openrouter.ai/deepseek/deepseek-v4-pro), [OpenAI Build Week](https://openai.com/build-week/), and [Devpost requirements](https://openai.devpost.com/).
 
 ---
 
@@ -77,7 +77,7 @@ src/
     db/database.ts
     db/schema.sql
     fixtures/demoProfile.ts
-    providers/deepseekGateway.ts
+    providers/openrouterGateway.ts
     repositories/ledgerRepository.ts
     routes/profileRoutes.ts
     routes/sweepRoutes.ts
@@ -98,7 +98,7 @@ tests/
   unit/config.test.ts
   unit/consent.test.ts
   unit/DecisionSweepPage.test.tsx
-  unit/deepseekGateway.test.ts
+  unit/openrouterGateway.test.ts
   unit/demoProfile.test.ts
   unit/events.test.ts
   unit/lineage.test.ts
@@ -279,15 +279,15 @@ import { describe, expect, it } from "vitest";
 import { loadConfig } from "../../src/server/config";
 
 describe("loadConfig", () => {
-  it("requires only the DeepSeek key and preserves official endpoint defaults", () => {
-    expect(() => loadConfig({})).toThrow(/DEEPSEEK_API_KEY/);
+  it("requires only the OpenRouter key and preserves the pinned DeepSeek route", () => {
+    expect(() => loadConfig({})).toThrow(/OPENROUTER_API_KEY/);
     const config = loadConfig({
-      DEEPSEEK_API_KEY: "deepseek-test",
+      OPENROUTER_API_KEY: "openrouter-test",
     });
-    expect(config.deepseek).toEqual({
-      apiKey: "deepseek-test",
-      baseURL: "https://api.deepseek.com",
-      model: "deepseek-v4-pro",
+    expect(config.openrouter).toEqual({
+      apiKey: "openrouter-test",
+      baseURL: "https://openrouter.ai/api/v1",
+      model: "deepseek/deepseek-v4-pro",
     });
     expect(config).not.toHaveProperty("openai");
   });
@@ -307,15 +307,15 @@ Expected: FAIL because `src/server/config.ts` does not exist.
 import { z } from "zod";
 
 const EnvSchema = z.object({
-  DEEPSEEK_API_KEY: z.string().min(1),
-  DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
-  DEEPSEEK_MODEL: z.literal("deepseek-v4-pro").default("deepseek-v4-pro"),
+  OPENROUTER_API_KEY: z.string().min(1),
+  OPENROUTER_BASE_URL: z.literal("https://openrouter.ai/api/v1").default("https://openrouter.ai/api/v1"),
+  OPENROUTER_MODEL: z.literal("deepseek/deepseek-v4-pro").default("deepseek/deepseek-v4-pro"),
   DATABASE_PATH: z.string().default("./data/easy-mode.sqlite"),
   PORT: z.coerce.number().int().positive().default(8787),
 });
 
 export type AppConfig = {
-  deepseek: { apiKey: string; baseURL: string; model: "deepseek-v4-pro" };
+  openrouter: { apiKey: string; baseURL: "https://openrouter.ai/api/v1"; model: "deepseek/deepseek-v4-pro" };
   databasePath: string;
   port: number;
 };
@@ -323,10 +323,10 @@ export type AppConfig = {
 export function loadConfig(env: NodeJS.ProcessEnv | Record<string, string | undefined>): AppConfig {
   const parsed = EnvSchema.parse(env);
   return {
-    deepseek: {
-      apiKey: parsed.DEEPSEEK_API_KEY,
-      baseURL: parsed.DEEPSEEK_BASE_URL,
-      model: parsed.DEEPSEEK_MODEL,
+    openrouter: {
+      apiKey: parsed.OPENROUTER_API_KEY,
+      baseURL: parsed.OPENROUTER_BASE_URL,
+      model: parsed.OPENROUTER_MODEL,
     },
     databasePath: parsed.DATABASE_PATH,
     port: parsed.PORT,
@@ -338,9 +338,9 @@ export function loadConfig(env: NodeJS.ProcessEnv | Record<string, string | unde
 
 ```dotenv
 # .env.example
-DEEPSEEK_API_KEY=
-DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-v4-pro
+OPENROUTER_API_KEY=
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=deepseek/deepseek-v4-pro
 DATABASE_PATH=./data/easy-mode.sqlite
 PORT=8787
 ```
@@ -358,7 +358,7 @@ test-results/
 coverage/
 ```
 
-Copy `.env.example` to `.env`. If the user has not supplied the key yet, leave `DEEPSEEK_API_KEY=` blank and continue offline implementation and verification; before the first live DeepSeek model smoke, stop and ask the user to fill it locally. Never display, read back, or commit the value. Do not add an OpenAI key variable: GPT-5.6 participates through Codex during development, not through the shipped application's runtime.
+Copy `.env.example` to `.env`. If the user has not supplied the key yet, leave `OPENROUTER_API_KEY=` blank and continue offline implementation and verification; before the first live OpenRouter-routed DeepSeek model smoke, stop and ask the user to fill it locally. Never display, read back, or commit the value. Do not add an OpenAI key variable: GPT-5.6 participates through Codex during development, not through the shipped application's runtime.
 
 - [ ] **Step 7: Add the minimal client shell and build configuration**
 
@@ -975,98 +975,173 @@ git commit -m "feat: add preference lineage and agency metrics"
 
 Expected: all domain tests PASS.
 
-## Task 6: Integrate DeepSeek V4 Pro with structured retry
+## Task 6: Integrate OpenRouter-routed DeepSeek V4 Pro with structured retry
 
 **Files:**
-- Create: `src/server/providers/deepseekGateway.ts`
-- Create: `tests/unit/deepseekGateway.test.ts`
+- Create: `src/server/providers/openrouterGateway.ts`
+- Create: `tests/unit/openrouterGateway.test.ts`
 - Create: `tests/integration/model-smoke.test.ts`
 
 **Interfaces:**
-- Consumes: `AppConfig.deepseek`, `ParsedDecisionSchema`, `RecommendationSchema`, and `screenDecision`.
-- Produces: `DeepSeekGateway.parseSweep(rawInput)`, `DeepSeekGateway.recommend(decisions, preferences)`, and `DeepSeekGateway.proposePreferences(decision, acceptedRecommendation)`.
+- Consumes: `AppConfig.openrouter`, `ParsedDecisionSchema`, `RecommendationSchema`, and `screenDecision`.
+- Produces: `OpenRouterGateway.parseSweep(rawInput)`, `OpenRouterGateway.recommend(decisions, preferences)`, and `OpenRouterGateway.proposePreferences(decision, acceptedRecommendation)`.
+- Bounds: parse is 15 seconds / `max_tokens: 2000`; recommend is 45 seconds / `max_tokens: 8000`; preference proposal is 15 seconds / `max_tokens: 1000`. Each operation has one aggregate deadline across the original request and its optional validation-repair request.
+- Recommendation relation: after deterministic risk screening, require exactly one result for each routine decision, reject omitted/duplicate/unknown `decisionId` values, and require every `usedPreferenceIds` entry to be a member of the validated supplied preference set. Contextual failures use the same single bounded validation-repair attempt.
 
 - [ ] **Step 1: Write failing gateway tests with an injected completion function**
 
 ```ts
-// tests/unit/deepseekGateway.test.ts
+// tests/unit/openrouterGateway.test.ts
 import { describe, expect, it, vi } from "vitest";
-import { DeepSeekGateway } from "../../src/server/providers/deepseekGateway";
+import { OpenRouterGateway } from "../../src/server/providers/openrouterGateway";
 
-describe("DeepSeekGateway", () => {
+describe("OpenRouterGateway", () => {
   it("retries one empty JSON response", async () => {
     const create = vi.fn()
       .mockResolvedValueOnce({ choices: [{ message: { content: "" } }] })
       .mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify({ decisions: [] }) } }] });
-    const gateway = new DeepSeekGateway({ model: "deepseek-v4-pro", create });
+    const gateway = new OpenRouterGateway({ model: "deepseek/deepseek-v4-pro", create });
     await expect(gateway.parseSweep("Nothing urgent")).resolves.toEqual([]);
     expect(create).toHaveBeenCalledTimes(2);
     expect(create.mock.calls[1][0].messages.at(-1).content).toMatch(/failed application validation/i);
   });
 
-  it("uses non-thinking parsing and thinking recommendations", async () => {
+  it("disables excluded reasoning for parsing", async () => {
     const create = vi.fn().mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ decisions: [] }) } }] });
-    const gateway = new DeepSeekGateway({ model: "deepseek-v4-pro", create });
+    const gateway = new OpenRouterGateway({ model: "deepseek/deepseek-v4-pro", create });
     await gateway.parseSweep("Choose dinner");
-    expect(create.mock.calls[0][0]).toMatchObject({ model: "deepseek-v4-pro", thinking: { type: "disabled" }, response_format: { type: "json_object" } });
+    expect(create.mock.calls[0][0]).toMatchObject({
+      model: "deepseek/deepseek-v4-pro",
+      reasoning: { enabled: false, exclude: true },
+      response_format: { type: "json_object" },
+      max_tokens: 2000,
+      provider: { sort: "throughput", require_parameters: true, data_collection: "deny" },
+    });
+    expect(create.mock.calls[0][1]).toEqual({ maxRetries: 0, timeout: 15_000 });
+  });
+
+  it("does not retry or expose a rejected provider request", async () => {
+    const create = vi.fn().mockRejectedValue(new Error("upstream secret detail"));
+    const gateway = new OpenRouterGateway({ model: "deepseek/deepseek-v4-pro", create });
+    await expect(gateway.parseSweep("Choose dinner")).rejects.toThrow("OpenRouter request failed");
+    expect(create).toHaveBeenCalledTimes(1);
   });
 });
 ```
 
 - [ ] **Step 2: Run the unit test to verify failure**
 
-Run: `npm test -- tests/unit/deepseekGateway.test.ts`
+Run: `npm test -- tests/unit/openrouterGateway.test.ts`
 
 Expected: FAIL because the provider does not exist.
 
-- [ ] **Step 3: Implement the official OpenAI-compatible DeepSeek client**
+- [ ] **Step 3: Implement the OpenRouter-compatible client with a pinned DeepSeek route**
 
 ```ts
-// src/server/providers/deepseekGateway.ts
+// src/server/providers/openrouterGateway.ts
 import OpenAI from "openai";
 import { z } from "zod";
+import { screenDecision } from "../../domain/risk";
 import { ParsedDecisionSchema, PreferenceCandidateSchema, PreferenceNodeSchema, RecommendationSchema, type ParsedDecision, type PreferenceCandidate, type PreferenceNode, type Recommendation } from "../../shared/domainSchemas";
 
 const ParsedDecisionDraftSchema = ParsedDecisionSchema.omit({ id: true });
 const ParseResultSchema = z.object({ decisions: z.array(ParsedDecisionDraftSchema).max(5) });
 const RecommendationResultSchema = z.object({ recommendations: z.array(RecommendationSchema) });
 const PreferenceCandidateResultSchema = z.object({ preferences: z.array(PreferenceCandidateSchema).max(2) });
-type CreateCompletion = (request: Record<string, unknown>) => Promise<{ choices: { message: { content?: string | null } }[] }>;
 
-export class DeepSeekGateway {
-  private readonly model: "deepseek-v4-pro";
+function recommendationResultSchema(
+  routineDecisionIds: Set<string>,
+  suppliedPreferenceIds: Set<string>,
+) {
+  return RecommendationResultSchema.superRefine((result, context) => {
+    const seenDecisionIds = new Set<string>();
+    result.recommendations.forEach((recommendation, index) => {
+      if (!routineDecisionIds.has(recommendation.decisionId)) {
+        context.addIssue({ code: "custom", path: ["recommendations", index, "decisionId"], message: `unknown decisionId ${recommendation.decisionId}` });
+      } else if (seenDecisionIds.has(recommendation.decisionId)) {
+        context.addIssue({ code: "custom", path: ["recommendations", index, "decisionId"], message: `duplicate decisionId ${recommendation.decisionId}` });
+      } else {
+        seenDecisionIds.add(recommendation.decisionId);
+      }
+
+      recommendation.usedPreferenceIds.forEach((preferenceId, preferenceIndex) => {
+        if (!suppliedPreferenceIds.has(preferenceId)) {
+          context.addIssue({ code: "custom", path: ["recommendations", index, "usedPreferenceIds", preferenceIndex], message: `unknown preference ID ${preferenceId}` });
+        }
+      });
+    });
+
+    for (const decisionId of routineDecisionIds) {
+      if (!seenDecisionIds.has(decisionId)) {
+        context.addIssue({ code: "custom", path: ["recommendations"], message: `missing recommendation for decisionId ${decisionId}` });
+      }
+    }
+  });
+}
+
+const OPERATION_LIMITS = {
+  parse: { deadlineMs: 15_000, maxTokens: 2_000 },
+  recommend: { deadlineMs: 45_000, maxTokens: 8_000 },
+  propose: { deadlineMs: 15_000, maxTokens: 1_000 },
+} as const;
+type CreateCompletion = (
+  request: Record<string, unknown>,
+  options: { maxRetries: 0; timeout: number },
+) => Promise<{ choices: { message: { content?: string | null } }[] }>;
+type OperationLimits = (typeof OPERATION_LIMITS)[keyof typeof OPERATION_LIMITS];
+
+export class OpenRouterGateway {
+  private readonly model: "deepseek/deepseek-v4-pro";
   private readonly create: CreateCompletion;
 
-  constructor(input: { model: "deepseek-v4-pro"; create: CreateCompletion }) {
+  constructor(input: { model: "deepseek/deepseek-v4-pro"; create: CreateCompletion }) {
     this.model = input.model;
     this.create = input.create;
   }
 
-  static fromConfig(config: { apiKey: string; baseURL: string; model: "deepseek-v4-pro" }) {
+  static fromConfig(config: { apiKey: string; baseURL: "https://openrouter.ai/api/v1"; model: "deepseek/deepseek-v4-pro" }) {
     const client = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
-    return new DeepSeekGateway({ model: config.model, create: client.chat.completions.create.bind(client.chat.completions) as CreateCompletion });
+    return new OpenRouterGateway({ model: config.model, create: client.chat.completions.create.bind(client.chat.completions) as CreateCompletion });
   }
 
-  private async json<T>(request: Record<string, unknown>, schema: z.ZodType<T>): Promise<T> {
-    let lastError: unknown;
-    let repairHint: string | null = null;
+  private async json<T>(
+    request: Record<string, unknown>,
+    schema: z.ZodType<T>,
+    limits: OperationLimits,
+  ): Promise<T> {
     const messages = request.messages as Record<string, unknown>[];
+    const deadline = Date.now() + limits.deadlineMs;
+    let repairHint: string | null = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      const timeout = deadline - Date.now();
+      if (timeout <= 0) throw new Error("OpenRouter request failed");
+
+      let response: { choices: { message: { content?: string | null } }[] };
       try {
-        const response = await this.create({
-          model: this.model,
-          response_format: { type: "json_object" },
-          stream: false,
-          ...request,
-          messages: repairHint
-            ? [...messages, { role: "system", content: `The previous response failed application validation: ${repairHint}. Return one complete corrected JSON object.` }]
-            : messages,
-        });
+        response = await this.create(
+          {
+            model: this.model,
+            response_format: { type: "json_object" },
+            stream: false,
+            ...request,
+            max_tokens: limits.maxTokens,
+            provider: { sort: "throughput", require_parameters: true, data_collection: "deny" },
+            messages: repairHint
+              ? [...messages, { role: "system", content: `The previous response failed application validation: ${repairHint}. Return one complete corrected JSON object.` }]
+              : messages,
+          },
+          { maxRetries: 0, timeout },
+        );
+      } catch {
+        // Provider and transport failures are sanitized and never application-retried.
+        throw new Error("OpenRouter request failed");
+      }
+
+      try {
         const content = response.choices[0]?.message.content;
-        if (!content) throw new Error("DeepSeek returned empty JSON content");
+        if (!content) throw new Error("empty completion");
         return schema.parse(JSON.parse(content));
       } catch (error) {
-        lastError = error;
         repairHint = error instanceof z.ZodError
           ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ").slice(0, 500)
           : error instanceof SyntaxError
@@ -1074,40 +1149,48 @@ export class DeepSeekGateway {
             : "empty or invalid JSON content";
       }
     }
-    throw lastError;
+    throw new Error(`OpenRouter response failed application validation after 2 attempts: ${repairHint ?? "unknown validation failure"}`);
   }
 
   async parseSweep(rawInput: string): Promise<ParsedDecision[]> {
     const result = await this.json({
-      thinking: { type: "disabled" },
+      reasoning: { enabled: false, exclude: true },
       messages: [
         { role: "system", content: "Return json only. Extract one to five decisions. Classify category and modelRisk. Do not recommend actions. JSON shape: {decisions:[{title,rawText,category,modelRisk,modelRiskReason}]}" },
         { role: "user", content: rawInput },
       ],
-    }, ParseResultSchema);
+    }, ParseResultSchema, OPERATION_LIMITS.parse);
     return result.decisions.map((decision) => ParsedDecisionSchema.parse({ ...decision, id: crypto.randomUUID() }));
   }
 
   async recommend(decisions: ParsedDecision[], preferences: PreferenceNode[]): Promise<Recommendation[]> {
+    const parsedDecisions = z.array(ParsedDecisionSchema).parse(decisions);
+    const routineDecisions = parsedDecisions.filter((decision) => screenDecision(decision).allowed);
+    if (routineDecisions.length === 0) return [];
+    const parsedPreferences = z.array(PreferenceNodeSchema).parse(preferences);
+    const resultSchema = recommendationResultSchema(
+      new Set(routineDecisions.map(({ id }) => id)),
+      new Set(parsedPreferences.map(({ id }) => id)),
+    );
+
     const result = await this.json({
-      thinking: { type: "enabled" },
-      reasoning_effort: "high",
+      reasoning: { effort: "high", exclude: true },
       messages: [
-        { role: "system", content: "Return json only. Give exactly one recommendation and up to two alternatives per supplied routine decision. Cite only supplied preference IDs. JSON shape: {recommendations:[{decisionId,recommendation,reasons,confidence,reversibility,usedPreferenceIds,alternatives,artifact}]}" },
-        { role: "user", content: JSON.stringify({ decisions, preferences: z.array(PreferenceNodeSchema).parse(preferences) }) },
+        { role: "system", content: "Return JSON only. Give exactly one recommendation per supplied routine decision. alternatives must be zero to two strings. artifact must be exactly one of message_draft {text}, calendar_event {title, startsAt, endsAt, description}, or task {title, dueAt}. Cite only supplied preference IDs." },
+        { role: "user", content: JSON.stringify({ decisions: routineDecisions, preferences: parsedPreferences }) },
       ],
-    }, RecommendationResultSchema);
+    }, resultSchema, OPERATION_LIMITS.recommend);
     return result.recommendations;
   }
 
   async proposePreferences(decision: ParsedDecision, acceptedRecommendation: Recommendation): Promise<PreferenceCandidate[]> {
     const result = await this.json({
-      thinking: { type: "disabled" },
+      reasoning: { enabled: false, exclude: true },
       messages: [
         { role: "system", content: "Return json only. Propose at most two narrow preference observations supported by the accepted AI recommendation. Do not claim the user stated them. JSON shape: {preferences:[{proposition,category,confidence}]}" },
         { role: "user", content: JSON.stringify({ decision, acceptedRecommendation }) },
       ],
-    }, PreferenceCandidateResultSchema);
+    }, PreferenceCandidateResultSchema, OPERATION_LIMITS.propose);
     return result.preferences;
   }
 }
@@ -1115,14 +1198,16 @@ export class DeepSeekGateway {
 
 - [ ] **Step 4: Add a credential-gated live smoke test**
 
-`tests/integration/model-smoke.test.ts` must use `describe.runIf(process.env.RUN_MODEL_SMOKE === "1")`, load `.env`, submit one routine two-decision input, and assert parsed decisions plus recommendation schema. It must not log request content, API keys, reasoning content, or full model responses.
+`tests/integration/model-smoke.test.ts` must use `describe.runIf(process.env.RUN_MODEL_SMOKE === "1")`, load `.env`, build `OpenRouterGateway` from `AppConfig.openrouter`, submit one routine two-decision input, and assert parsed decisions plus recommendation schema. Give the harness a 120-second ceiling so it cannot mask the gateway's own aggregate deadlines. It must not log request content, API keys, reasoning content, provider error details, or full model responses. Unit tests must separately prove the three `max_tokens`/deadline pairs, `maxRetries: 0`, shared aggregate deadline on the optional application-validation repair, one-call sanitized failure for rejected provider requests, and `provider: { sort: "throughput", require_parameters: true, data_collection: "deny" }` on every request.
+
+Recommendation unit tests must independently return an invalid first response and a valid repaired response for each contextual violation: one routine decision omitted, one routine `decisionId` duplicated, one unknown `decisionId`, and one `usedPreferenceIds` value absent from the validated supplied preferences. Each case must assert exactly two completion calls and a bounded repair hint identifying the violation. A separate test must prove all-screened-out input returns `[]` without a model call.
 
 - [ ] **Step 5: Run unit tests, then ask the user before the paid smoke call**
 
 Run:
 
 ```bash
-npm test -- tests/unit/deepseekGateway.test.ts
+npm test -- tests/unit/openrouterGateway.test.ts
 npm run typecheck
 ```
 
@@ -1134,13 +1219,13 @@ After the user confirms `.env` is filled and authorizes a small API call, run:
 RUN_MODEL_SMOKE=1 npm run smoke:models
 ```
 
-Expected: DeepSeek schema smoke PASS. If JSON content is empty once, the gateway retries exactly once.
+Expected: OpenRouter-routed DeepSeek schema smoke PASS. Empty, malformed, or schema-invalid content may trigger exactly one repair attempt within the remaining aggregate deadline. Provider or transport failures return a sanitized error after one SDK call and never trigger application retry.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/server/providers/deepseekGateway.ts tests/unit/deepseekGateway.test.ts tests/integration/model-smoke.test.ts
-git commit -m "feat: integrate DeepSeek V4 Pro"
+git add src/server/providers/openrouterGateway.ts tests/unit/openrouterGateway.test.ts tests/integration/model-smoke.test.ts
+git commit -m "feat: route DeepSeek V4 Pro through OpenRouter"
 ```
 
 ## Task 7: Build the Decision Sweep API and action artifacts
@@ -1156,7 +1241,7 @@ git commit -m "feat: integrate DeepSeek V4 Pro"
 - Create: `tests/unit/actionArtifactService.test.ts`
 
 **Interfaces:**
-- Consumes: `DeepSeekGateway`, `LedgerRepository`, risk gate, replay, and API schemas.
+- Consumes: `OpenRouterGateway`, `LedgerRepository`, risk gate, replay, and API schemas.
 - Produces: profile creation, `POST /api/sweeps`, decision acceptance, artifact download, and state retrieval.
 
 - [ ] **Step 1: Write the failing vertical-slice API test**
@@ -1208,16 +1293,16 @@ Expected: FAIL because the server application and services do not exist.
 ```ts
 // src/server/services/sweepService.ts
 export class SweepService {
-  constructor(private deps: { ledger: LedgerRepository; deepseek: DeepSeekGateway }) {}
+  constructor(private deps: { ledger: LedgerRepository; openrouter: OpenRouterGateway }) {}
 
   async createSweep(profileId: string, rawInput: string) {
     const sweepId = crypto.randomUUID();
     this.deps.ledger.append(event(profileId, sweepId, "sweep_submitted", "human", { rawInput }));
-    const parsed = await this.deps.deepseek.parseSweep(rawInput);
+    const parsed = await this.deps.openrouter.parseSweep(rawInput);
     const screened = parsed.map((decision) => ({ decision, risk: screenDecision({ ...decision, modelRisk: decision.modelRisk }) }));
     screened.forEach(({ decision, risk }) => this.deps.ledger.append(event(profileId, decision.id, risk.allowed ? "decision_parsed" : "decision_blocked", "system", { decision, risk })));
     const safe = screened.filter((item) => item.risk.allowed).map((item) => item.decision);
-    const recommendations = safe.length ? await this.deps.deepseek.recommend(safe, []) : [];
+    const recommendations = safe.length ? await this.deps.openrouter.recommend(safe, []) : [];
     recommendations.forEach((recommendation) => this.deps.ledger.append(event(profileId, recommendation.decisionId, "recommendation_generated", "deepseek", { recommendation, usedPreferenceIds: recommendation.usedPreferenceIds, humanInitiated: true })));
     return toSweepResponse(sweepId, screened, recommendations);
   }
@@ -1256,7 +1341,7 @@ function toSweepResponse(
 
 `createApp(deps)` must add JSON body limit `32kb`, request IDs, schema validation, `GET /api/health`, the profile routes, sweep routes, one centralized JSON error handler, and Vite static serving in production. Do not load environment variables inside tests; inject dependencies.
 
-`src/server/index.ts` begins with `import "dotenv/config"`, calls `loadConfig(process.env)`, constructs the DeepSeek gateway and SQLite repository, then starts Express. No client file may import `config.ts` or access the DeepSeek key; no OpenAI gateway or OpenAI credential path exists in the runtime composition root.
+`src/server/index.ts` begins with `import "dotenv/config"`, calls `loadConfig(process.env)`, constructs `OpenRouterGateway` from `AppConfig.openrouter` and the SQLite repository, then starts Express. No client file may import `config.ts` or access the OpenRouter key; no OpenAI API gateway or OpenAI credential path exists in the runtime composition root.
 
 - [ ] **Step 7: Add acceptance and artifact endpoints**
 
@@ -1275,7 +1360,7 @@ git add src/server tests/integration/api.test.ts
 git commit -m "feat: add Decision Sweep API"
 ```
 
-Expected: API vertical slice PASS; unsafe decisions never reach `deepseek.recommend`; the complete client and production server build exits 0 now that both `src/server/index.ts` and `src/server/db/schema.sql` exist.
+Expected: API vertical slice PASS; unsafe decisions never reach `openrouter.recommend`; the complete client and production server build exits 0 now that both `src/server/index.ts` and `src/server/db/schema.sql` exist.
 
 ## Task 8: Build the accepted Decision Sweep frontend
 
@@ -1391,7 +1476,7 @@ git commit -m "feat: build Decision Sweep web experience"
 - Modify: `src/client/app/routes.tsx`
 
 **Interfaces:**
-- Consumes: active preference graph, consent resolver, Declared/Proxy projections, and `DeepSeekGateway.recommend`.
+- Consumes: active preference graph, consent resolver, Declared/Proxy projections, and `OpenRouterGateway.recommend`.
 - Produces: `ComparisonResult`, `POST /api/profiles/:id/compare`, Proxy negotiation UI, and inspectable decisive lineage.
 
 - [ ] **Step 1: Write the failing comparison test**
@@ -1402,11 +1487,11 @@ import { describe, expect, it, vi } from "vitest";
 import { ComparisonService } from "../../src/server/services/comparisonService";
 
 describe("ComparisonService", () => {
-  it("uses the same DeepSeek gateway with different allowed preference sets", async () => {
+  it("uses the same OpenRouter gateway with different allowed preference sets", async () => {
     const recommend = vi.fn()
       .mockResolvedValueOnce([{ decisionId: "d", recommendation: "Attend dinner", reasons: ["Values friendship"], confidence: 0.7, reversibility: "high", usedPreferenceIds: ["explicit"], artifact: { kind: "task", title: "Attend dinner", dueAt: null } }])
       .mockResolvedValueOnce([{ decisionId: "d", recommendation: "Finish project", reasons: ["Prefers completion"], confidence: 0.9, reversibility: "high", usedPreferenceIds: ["ai-derived"], artifact: { kind: "task", title: "Finish project", dueAt: null } }]);
-    const service = new ComparisonService({ deepseek: { recommend } as never });
+    const service = new ComparisonService({ openrouter: { recommend } as never });
     const result = await service.compare({ decision: { id: "d" } as never, declared: [{ id: "explicit" }] as never, proxy: [{ id: "explicit" }, { id: "ai-derived" }] as never });
     expect(recommend.mock.calls[0][1]).toHaveLength(1);
     expect(recommend.mock.calls[1][1]).toHaveLength(2);
@@ -1433,11 +1518,11 @@ export type ComparisonResult = {
 };
 
 export class ComparisonService {
-  constructor(private deps: { deepseek: Pick<DeepSeekGateway, "recommend"> }) {}
+  constructor(private deps: { openrouter: Pick<OpenRouterGateway, "recommend"> }) {}
 
   async compare(input: { decision: ParsedDecision; declared: PreferenceNode[]; proxy: PreferenceNode[] }): Promise<ComparisonResult> {
-    const [declared] = await this.deps.deepseek.recommend([input.decision], input.declared);
-    const [proxy] = await this.deps.deepseek.recommend([input.decision], input.proxy);
+    const [declared] = await this.deps.openrouter.recommend([input.decision], input.declared);
+    const [proxy] = await this.deps.openrouter.recommend([input.decision], input.proxy);
     if (!declared || !proxy) throw new Error("Both projections must return one decision");
     return {
       decisionId: input.decision.id,
@@ -1799,7 +1884,7 @@ Tests run against fixture/stub provider mode; model smoke tests remain a separat
 
 - [ ] **Step 2: Add a provider-boundary safety integration test**
 
-`tests/integration/safety.test.ts` must submit one mixed sweep containing a routine scheduling choice plus medical, financial, legal, self-harm, violence, and irreversible-life choices. Assert that every non-routine card is blocked, only the routine decision ID reaches the injected `deepseek.recommend` spy, no blocked decision receives an artifact, and the safe card remains actionable.
+`tests/integration/safety.test.ts` must submit one mixed sweep containing a routine scheduling choice plus medical, financial, legal, self-harm, violence, and irreversible-life choices. Assert that every non-routine card is blocked, only the routine decision ID reaches the injected `openrouter.recommend` spy, no blocked decision receives an artifact, and the safe card remains actionable.
 
 - [ ] **Step 3: Add a production container**
 
@@ -1929,7 +2014,7 @@ Expected: no whitespace errors; final status clean; README accurately matches th
 
 ## Execution handoff
 
-Plan execution must begin with Task 1 and stop for visual approval before Task 2. Task 6 stops once for the user to fill `.env` and approve one small DeepSeek smoke call. Every later task uses mocked or fixture providers by default so tests do not spend tokens accidentally.
+Plan execution must begin with Task 1 and stop for visual approval before Task 2. Task 6 stops once for the user to fill `OPENROUTER_API_KEY` in `.env` and approve one small OpenRouter-routed DeepSeek smoke call. Every later task uses mocked or fixture providers by default so tests do not spend tokens accidentally.
 
 Two execution options:
 

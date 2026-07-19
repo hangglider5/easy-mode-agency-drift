@@ -1,20 +1,22 @@
 import { z } from "zod";
 
 const EnvSchema = z.object({
-  DEEPSEEK_API_KEY: z.string().min(1),
-  DEEPSEEK_BASE_URL: z
-    .literal("https://api.deepseek.com")
-    .default("https://api.deepseek.com"),
-  DEEPSEEK_MODEL: z.literal("deepseek-v4-pro").default("deepseek-v4-pro"),
+  OPENROUTER_API_KEY: z.string().min(1),
+  OPENROUTER_BASE_URL: z
+    .literal("https://openrouter.ai/api/v1")
+    .default("https://openrouter.ai/api/v1"),
+  OPENROUTER_MODEL: z
+    .literal("deepseek/deepseek-v4-pro")
+    .default("deepseek/deepseek-v4-pro"),
   DATABASE_PATH: z.string().default("./data/easy-mode.sqlite"),
   PORT: z.coerce.number().int().positive().default(8787),
 });
 
 export type AppConfig = {
-  deepseek: {
+  openrouter: {
     apiKey: string;
-    baseURL: "https://api.deepseek.com";
-    model: "deepseek-v4-pro";
+    baseURL: "https://openrouter.ai/api/v1";
+    model: "deepseek/deepseek-v4-pro";
   };
   databasePath: string;
   port: number;
@@ -25,10 +27,10 @@ export function loadConfig(
 ): AppConfig {
   const parsed = EnvSchema.parse(env);
   return {
-    deepseek: {
-      apiKey: parsed.DEEPSEEK_API_KEY,
-      baseURL: parsed.DEEPSEEK_BASE_URL,
-      model: parsed.DEEPSEEK_MODEL,
+    openrouter: {
+      apiKey: parsed.OPENROUTER_API_KEY,
+      baseURL: parsed.OPENROUTER_BASE_URL,
+      model: parsed.OPENROUTER_MODEL,
     },
     databasePath: parsed.DATABASE_PATH,
     port: parsed.PORT,

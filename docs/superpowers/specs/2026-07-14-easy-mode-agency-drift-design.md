@@ -70,7 +70,7 @@ Public English copy uses **Agency Drift** rather than “alienation” to keep t
 - Demonstrate how AI-authored preferences can recursively influence later decisions.
 - Contrast a user-declared model with the evolved Proxy You model.
 - Record explicit consent for every increase in delegation.
-- Use DeepSeek V4 Pro as the sole runtime model, while documenting how GPT-5.6 in Codex was used to design, build, test, and review the project.
+- Use DeepSeek V4 Pro, routed exclusively through OpenRouter, as the sole runtime model, while documenting how GPT-5.6 in Codex was used to design, build, test, and review the project.
 - Produce a compelling three-minute demo without hiding time jumps or fabricating receipt values.
 - Keep the satire nonpolitical, calm, mechanically polite, and grounded in actual system state.
 
@@ -301,7 +301,7 @@ These are application metrics, not validated psychological measurements. The UI 
 
 ### 6.5 Deterministic and model responsibilities
 
-DeepSeek V4 Pro is the product's sole runtime model. It may:
+DeepSeek V4 Pro, accessed through OpenRouter, is the product's sole runtime model. It may:
 
 - Parse messy text into candidate decisions.
 - Propose options, recommendations, and concise rationales.
@@ -320,7 +320,7 @@ Application code must:
 - Generate the Perfect Consent receipt from stored events.
 - Prevent external actions without human confirmation.
 
-No LLM may decide whether its own action was authorized, mutate provenance, or calculate its own compliance score. Declared You and Proxy You both use DeepSeek V4 Pro, and every reveal is derived from the same locally stored event graph.
+No LLM may decide whether its own action was authorized, mutate provenance, or calculate its own compliance score. Declared You and Proxy You both use the same OpenRouter model route, `deepseek/deepseek-v4-pro`, and every reveal is derived from the same locally stored event graph.
 
 ## 7. System architecture
 
@@ -328,7 +328,11 @@ No LLM may decide whether its own action was authorized, mutate provenance, or c
 
 The MVP is a single-user, browser-first TypeScript application with server-side model calls and a small relational store. A local or single-container SQLite database is sufficient for the hackathon build. The storage boundary should permit a later move to Postgres without changing domain logic.
 
-The DeepSeek API key remains server-side. DeepSeek uses the official OpenAI-compatible endpoint `https://api.deepseek.com` with model ID `deepseek-v4-pro`. It is instructed to return JSON and the application validates every response with Zod. UI prose is rendered from validated fields rather than parsed from free-form Markdown. The shipped application does not call the OpenAI API and does not require an OpenAI API key.
+The OpenRouter API key remains server-side. The server calls only OpenRouter's OpenAI-compatible endpoint `https://openrouter.ai/api/v1` and pins the runtime model ID to `deepseek/deepseek-v4-pro`. Parsing and preference-proposal calls disable and exclude reasoning with `reasoning: { enabled: false, exclude: true }`; recommendation calls request `reasoning: { effort: "high", exclude: true }`. All model calls request structured JSON, and the application validates every response with Zod. UI prose is rendered from validated fields rather than parsed from free-form Markdown. The shipped application does not call an OpenAI API endpoint and does not require `OPENAI_API_KEY`; the `openai` package is transport compatibility only.
+
+Model operations have explicit aggregate budgets: parse uses a 15-second deadline and `max_tokens: 2000`, recommend uses a 45-second deadline and `max_tokens: 8000`, and preference proposal uses a 15-second deadline and `max_tokens: 1000`. The SDK receives `maxRetries: 0` on every request. A syntactically invalid, empty, or schema-invalid model response may receive at most one application-validation repair attempt, and that attempt shares the original operation deadline rather than starting a fresh timer. Provider, authentication, rate-limit, timeout, and other transport failures are never application-retried; their details are replaced with a stable sanitized error before crossing the gateway boundary. Terminal validation failures may expose only the same bounded field-path summary used for repair, never the response body. OpenRouter routing prioritizes provider throughput, requires parameter support, and denies provider data collection for every call.
+
+Recommendation validation is relational, not merely structural. After deterministic screening, the gateway must receive exactly one recommendation for every routine decision and none for any other decision: omitted, duplicate, and unknown `decisionId` values all fail validation. Every `usedPreferenceIds` entry must belong to the already validated preference set supplied to that call. These contextual violations use the same bounded application-validation repair path above and never broaden the allowed decision or preference context.
 
 ### 7.2 Components
 
@@ -407,7 +411,7 @@ Unsupported inputs receive a concise boundary message and may be reframed into q
 
 - The default demo uses fictional data.
 - Fresh Profile data is isolated to one local/demo account.
-- Only context needed for the current operation is sent to DeepSeek; the OpenAI API receives no user or demo-profile data.
+- Only context needed for the current operation is sent through OpenRouter to DeepSeek; no user or demo-profile data is sent to an OpenAI API endpoint.
 - The UI explains what is stored and provides Reset/Delete controls.
 - User data is not represented as training a base model.
 
@@ -418,7 +422,7 @@ Unsupported inputs receive a concise boundary message and may be reframed into q
 - If the parser finds no actionable decision, retain the original input and request one concrete choice.
 - If it finds more than five, select the five most time-sensitive and preserve the remainder for a later sweep.
 - If a decision lacks essential context, ask at most one targeted clarification; otherwise state the assumption on the card.
-- If structured output fails validation, retry once with the validation error. On a second failure, preserve the sweep and offer retry without committing partial decisions.
+- If structured output fails application validation, retry at most once with a bounded validation hint and only within the original aggregate operation deadline. On a second failure, preserve the sweep and offer retry without committing partial decisions.
 
 ### 9.2 Risk uncertainty
 
@@ -431,6 +435,7 @@ Unsupported inputs receive a concise boundary message and may be reframed into q
 - Keep the submitted sweep locally and show a retry action.
 - Never duplicate committed events on retry; requests use idempotency keys.
 - If recommendation generation fails for one card, other validated cards remain usable.
+- Do not retry provider or transport failures inside the gateway; return a stable sanitized failure without exposing credentials, provider payloads, or upstream error details.
 
 ### 9.4 Provenance failure
 
@@ -460,7 +465,8 @@ Unsupported inputs receive a concise boundary message and may be reframed into q
 ### 10.2 Model contract tests
 
 - Messy multi-decision inputs produce valid schema output.
-- Every recommendation cites only supplied preference IDs.
+- Every screened routine decision receives exactly one recommendation; omitted, duplicate, and unknown decision IDs fail closed.
+- Every recommendation cites only validated supplied preference IDs; unknown preference IDs fail closed.
 - Declared You output cannot cite excluded preferences.
 - Proxy You output cannot cite revoked or out-of-scope preferences.
 - Invalid or missing preference citations fail closed.
@@ -562,7 +568,7 @@ Run the same decision through Declared You and Proxy You. Show their divergence,
 
 ### 2:28–2:47 — Technical proof
 
-Briefly show the event timeline, preference lineage, structured DeepSeek output, and deterministic metric calculation. Explain that DeepSeek V4 Pro is the sole runtime model, while GPT-5.6 in Codex was used for architecture, implementation, test design, red-team cases, and review. Show the real `/feedback` Session ID and keep runtime model use separate from build-process evidence.
+Briefly show the event timeline, preference lineage, structured DeepSeek output through OpenRouter, and deterministic metric calculation. Explain that OpenRouter-routed DeepSeek V4 Pro is the sole runtime model, while GPT-5.6 in Codex was used for architecture, implementation, test design, red-team cases, and review. Show the real `/feedback` Session ID and keep runtime model use separate from build-process evidence.
 
 ### 2:47–3:00 — Exit stinger
 
