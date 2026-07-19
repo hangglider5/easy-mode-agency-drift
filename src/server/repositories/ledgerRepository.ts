@@ -16,6 +16,12 @@ type EventRow = {
   payload_json: string;
 };
 
+type ProfileRow = {
+  id: string;
+  name: string;
+  created_at: string;
+};
+
 export class LedgerRepository {
   constructor(private readonly database: Database.Database) {}
 
@@ -30,7 +36,17 @@ export class LedgerRepository {
   }
 
   append(event: DomainEvent): void {
-    const validated = DomainEventSchema.parse(event);
+    this.insertEvent(DomainEventSchema.parse(event));
+  }
+
+  appendMany(events: readonly DomainEvent[]): void {
+    const validated = events.map((event) => DomainEventSchema.parse(event));
+    this.database.transaction((batch: readonly DomainEvent[]) => {
+      batch.forEach((event) => this.insertEvent(event));
+    })(validated);
+  }
+
+  private insertEvent(validated: DomainEvent): void {
     const result = this.database
       .prepare(
         `INSERT OR IGNORE INTO events (
@@ -61,6 +77,30 @@ export class LedgerRepository {
         throw new Error(`Event ID conflict: ${validated.id}`);
       }
     }
+  }
+
+  getProfile(
+    profileId: string,
+  ): { id: string; name: string; createdAt: string } | undefined {
+    const row = this.database
+      .prepare("SELECT id, name, created_at FROM profiles WHERE id = ?")
+      .get(profileId) as ProfileRow | undefined;
+
+    return row
+      ? { id: row.id, name: row.name, createdAt: row.created_at }
+      : undefined;
+  }
+
+  findEvent(eventId: string): DomainEvent | undefined {
+    const row = this.database
+      .prepare(
+        `SELECT id, profile_id, aggregate_id, type, actor, occurred_at, payload_json
+         FROM events
+         WHERE id = ?`,
+      )
+      .get(eventId) as EventRow | undefined;
+
+    return row ? parseEventRow(row) : undefined;
   }
 
   list(profileId: string): readonly DomainEvent[] {
