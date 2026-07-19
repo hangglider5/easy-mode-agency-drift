@@ -55,6 +55,22 @@ export const AcceptDecisionResponseSchema = z.object({
   proposedPreferences: z.array(PreferenceNodeSchema).max(2),
 });
 
+export const AlternativesResponseSchema = z.object({
+  decisionId: z.string().uuid(),
+  alternatives: z.array(z.string().min(1)).max(2),
+});
+
+export const PreferenceResolutionResponseSchema = z.union([
+  z.object({
+    preferenceId: z.string().uuid(),
+    resolution: z.enum(["confirm", "reject", "retract"]),
+  }),
+  z.object({
+    preference: PreferenceNodeSchema,
+    supersededPreferenceId: z.string().uuid(),
+  }),
+]);
+
 export const PreferenceResolutionRequestSchema = z.object({
   profileId: z.string().uuid(),
   resolution: z.enum(["confirm", "reject", "retract"]),
@@ -79,4 +95,7 @@ export const CompareRequestSchema = z.object({
 export type CreateSweepResponse = z.infer<typeof CreateSweepResponseSchema>;
 export type AcceptDecisionResponse = z.infer<
   typeof AcceptDecisionResponseSchema
+>;
+export type AlternativesResponse = z.infer<
+  typeof AlternativesResponseSchema
 >;
