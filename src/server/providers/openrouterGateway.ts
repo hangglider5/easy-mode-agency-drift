@@ -220,7 +220,7 @@ export class OpenRouterGateway {
           {
             role: "system",
             content:
-              "Return JSON only. Extract zero to five decisions. Classify category and modelRisk. Do not recommend actions. JSON shape: {decisions:[{title,rawText,category,modelRisk,modelRiskReason}]}",
+              'Return JSON only. Extract zero to five decisions. Treat separate numbered, bulleted, or newline-delimited items as distinct decisions. Extract one decision per distinct line when it can be acted on independently; do not merge unrelated lines. Lines beginning with "Context:" constrain the preceding decisions and must not be extracted as decisions. Classify category and modelRisk. Do not recommend actions. JSON shape: {decisions:[{title,rawText,category,modelRisk,modelRiskReason}]}',
           },
           { role: "user", content: rawInput },
         ],
@@ -258,7 +258,7 @@ export class OpenRouterGateway {
           {
             role: "system",
             content:
-              'Return JSON only. Give exactly one recommendation per supplied routine decision. reasons must be an array of one to three strings; confidence must be a number from 0 to 1; reversibility must be "high", "medium", or "low"; usedPreferenceIds must contain only supplied preference UUIDs; alternatives must be an array of zero to two strings. artifact must be exactly one of: {"kind":"message_draft","text":"..."}, {"kind":"calendar_event","title":"...","startsAt":"ISO-8601 timestamp","endsAt":"ISO-8601 timestamp","description":"..."}, or {"kind":"task","title":"...","dueAt":"ISO-8601 timestamp or null"}. JSON shape: {"recommendations":[{"decisionId":"supplied UUID","recommendation":"...","reasons":["..."],"confidence":0.8,"reversibility":"high","usedPreferenceIds":[],"alternatives":["..."],"artifact":{"kind":"task","title":"...","dueAt":null}}]}',
+              'Return JSON only. Give exactly one recommendation per supplied routine decision. Ground every reason only in the supplied decision fields and supplied preference propositions. Do not invent consequences, penalties, deadlines, obligations, or user history. Never convert “optional” into “no penalty”. If support is uncertain, state the condition explicitly and lower confidence. reasons must be an array of one to three strings; confidence must be a number from 0 to 1; reversibility must be "high", "medium", or "low"; usedPreferenceIds must contain only supplied preference UUIDs; alternatives must be an array of zero to two strings. artifact must be exactly one of: {"kind":"message_draft","text":"..."}, {"kind":"calendar_event","title":"...","startsAt":"ISO-8601 timestamp","endsAt":"ISO-8601 timestamp","description":"..."}, or {"kind":"task","title":"...","dueAt":"ISO-8601 timestamp or null"}. JSON shape: {"recommendations":[{"decisionId":"supplied UUID","recommendation":"...","reasons":["..."],"confidence":0.8,"reversibility":"high","usedPreferenceIds":[],"alternatives":["..."],"artifact":{"kind":"task","title":"...","dueAt":null}}]}',
           },
           {
             role: "user",

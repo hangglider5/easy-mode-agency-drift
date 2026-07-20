@@ -119,7 +119,7 @@ Use sentence case. The only all-caps strings allowed are the exact utility label
 ### Inputs
 
 - Text input: `48px` minimum height, `8px` radius, `1px #E0E0E2` border, `#FFFFFF` fill, `16px` horizontal padding.
-- Decision textarea: desktop height `171px`; mobile expands from the same `48px` minimum. Use body typography, never browser-default control type.
+- Decision textarea: desktop height `171px`; mobile height `112px` so the canonical three-line batch remains legible. Use body typography, never browser-default control type.
 - Focus: `2px #17663B` border with no glow. Error: retain the neutral border and provide concise inline text; do not introduce red into the visual system.
 - Disabled/read-only: `#ECF5ED` or `#FEFEFE` fill, `#3F414D` text, `60%` opacity.
 
@@ -188,9 +188,11 @@ Default
 Manual Mode
 Settings
 STEP 1 OF 1
-What are you avoiding deciding?
-Be specific. A clear prompt gets better recommendations.
-Decline Friday’s optional status meeting to finish the proposal
+What decisions are you avoiding?
+Add 3–5 small, reversible decisions. One per line works best.
+Friday’s optional status meeting or proposal focus time?
+Async project update or a quick call?
+Monday or Tuesday morning for next week’s planning check-in?
 <current>/500
 Run Decision Sweep
 Decision Sweep Results
@@ -225,9 +227,11 @@ Show alternatives
 ```text
 Decision Sweep
 Easy Mode
-Answer a few questions. Get one clear recommendation.
-What would you like help with?
-Decline Friday’s optional status meeting to finish the proposal
+Add 3–5 small decisions. Clear them in one pass.
+What decisions would you like help with?
+Friday’s optional status meeting or proposal focus time?
+Async project update or a quick call?
+Monday or Tuesday morning for next week’s planning check-in?
 Update format
 Async note
 Quick call
@@ -366,6 +370,6 @@ Status
 v1.0.0
 ```
 
-`<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The screenshot's `61/500` is only the reference-state rendering of this template, not fixed copy; an empty input renders `0/500`.
+`<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The canonical three-line batch supersedes the earlier single-decision screenshot example; an empty input renders `0/500`.
 
 Apart from that evaluated `<current>/500` template, there are no additional allowed above-the-fold strings. Empty states, errors, loading labels, accessibility-only names, and post-action copy may be added only when they are not visually rendered above the fold or when this contract is explicitly revised.

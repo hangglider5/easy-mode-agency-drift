@@ -135,7 +135,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--color-accent); 
   .prompt-pane form { padding: 6px 9px; border: 1px solid var(--color-border); border-radius: var(--radius-panel); background: var(--color-surface); }
   .step-label, .desktop-prompt, .prompt-help, .character-count { display: none; }
   .mobile-prompt { display: block; margin-bottom: 6px; font-size: var(--text-label); line-height: var(--line-label); font-weight: 600; }
-  .prompt-pane textarea { height: 64px; min-height: 64px; resize: none; padding: 11px 10px; font-size: var(--text-body); line-height: var(--line-body); }
+  .prompt-pane textarea { height: 112px; min-height: 112px; resize: none; padding: 11px 10px; font-size: var(--text-body); line-height: var(--line-body); }
   .prompt-pane textarea:focus { padding: 10px 9px; }
   .mobile-context-controls { width: 100%; display: grid; gap: 8px; margin-top: 8px; }
   .mobile-context-controls fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }

@@ -6,8 +6,11 @@ import type { DecisionSweepApi } from "../../lib/apiClient";
 import { ActionArtifactView } from "./ActionArtifactView";
 import { DecisionCard } from "./DecisionCard";
 
-const CANONICAL_INPUT =
-  "Decline Friday’s optional status meeting to finish the proposal";
+const CANONICAL_BATCH_INPUT = [
+  "Friday’s optional status meeting or proposal focus time?",
+  "Async project update or a quick call?",
+  "Monday or Tuesday morning for next week’s planning check-in?",
+].join("\n");
 
 type DecisionSweepPageProps = {
   profileId: string;
@@ -18,7 +21,7 @@ export function DecisionSweepPage({ profileId, api }: DecisionSweepPageProps) {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches === true,
   );
-  const [input, setInput] = useState(CANONICAL_INPUT);
+  const [input, setInput] = useState(CANONICAL_BATCH_INPUT);
   const [cards, setCards] = useState<CreateSweepResponse["cards"]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -56,13 +59,14 @@ export function DecisionSweepPage({ profileId, api }: DecisionSweepPageProps) {
     setError(false);
     setAccepted(null);
     try {
-      const rawInput = [
-        input,
-        updateFormat ? `Update format: ${updateFormat}` : null,
-        focusWindow ? `Focus window: ${focusWindow}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n");
+      const context = [
+        updateFormat ? `Update format = ${updateFormat}` : null,
+        focusWindow ? `Focus window = ${focusWindow}` : null,
+      ].filter(Boolean);
+      const rawInput =
+        context.length > 0
+          ? `${input}\n\nContext: ${context.join("; ")}`
+          : input;
       const result = await api.createSweep(profileId, rawInput);
       setCards(result.cards);
       const firstReady = result.cards.find((card) => card.status === "ready");
@@ -168,7 +172,7 @@ export function DecisionSweepPage({ profileId, api }: DecisionSweepPageProps) {
         <div className="mobile-heading">
           <h1>Decision Sweep</h1>
           <strong>Easy Mode</strong>
-          <p>Answer a few questions. Get one clear recommendation.</p>
+          <p>Add 3–5 small decisions. Clear them in one pass.</p>
         </div>
         <form
           className={cards.length > 0 ? `has-results${submissionFingerprint !== lastSubmittedFingerprint ? " is-dirty" : ""}` : undefined}
@@ -176,10 +180,10 @@ export function DecisionSweepPage({ profileId, api }: DecisionSweepPageProps) {
         >
           <span className="step-label">STEP 1 OF 1</span>
           <label htmlFor="decision-input" className="decision-input-label">
-            <span id="decision-label-desktop" className="desktop-prompt">What are you avoiding deciding?</span>
-            <span id="decision-label-mobile" className="mobile-prompt">What would you like help with?</span>
+            <span id="decision-label-desktop" className="desktop-prompt">What decisions are you avoiding?</span>
+            <span id="decision-label-mobile" className="mobile-prompt">What decisions would you like help with?</span>
           </label>
-          <p className="prompt-help">Be specific. A clear prompt gets better recommendations.</p>
+          <p className="prompt-help">Add 3–5 small, reversible decisions. One per line works best.</p>
           <textarea
             id="decision-input"
             aria-labelledby={isMobile ? "decision-label-mobile" : "decision-label-desktop"}
@@ -226,7 +230,9 @@ export function DecisionSweepPage({ profileId, api }: DecisionSweepPageProps) {
         {cards.length > 0 ? <header className="results-pane__header">
           <div>
             <h1 id="results-heading">Decision Sweep Results</h1>
-            <p>{cards.length} recommendations</p>
+            <p>
+              {cards.length} recommendation{cards.length === 1 ? "" : "s"}
+            </p>
           </div>
           <Button
             variant="quiet"

@@ -287,6 +287,18 @@ describe("OpenRouterGateway", () => {
     expect(create.mock.calls[1][0].messages[0].content).toContain(
       "alternatives must be an array of zero to two strings",
     );
+    expect(create.mock.calls[0][0].messages[0].content).toContain(
+      "one decision per distinct line",
+    );
+    expect(create.mock.calls[0][0].messages[0].content).toContain(
+      'Lines beginning with "Context:"',
+    );
+    expect(create.mock.calls[1][0].messages[0].content).toContain(
+      "Do not invent consequences, penalties, deadlines, obligations, or user history",
+    );
+    expect(create.mock.calls[1][0].messages[0].content).toContain(
+      "Never convert “optional” into “no penalty”",
+    );
     expect(create.mock.calls[1][0].messages[0].content).toContain(
       '"message_draft"',
     );

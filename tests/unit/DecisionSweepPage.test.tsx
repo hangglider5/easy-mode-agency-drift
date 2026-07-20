@@ -15,6 +15,11 @@ import {
 const profileId = randomUUID();
 const decisionId = randomUUID();
 const eventId = randomUUID();
+const canonicalBatch = [
+  "Friday’s optional status meeting or proposal focus time?",
+  "Async project update or a quick call?",
+  "Monday or Tuesday morning for next week’s planning check-in?",
+].join("\n");
 
 afterEach(() => {
   cleanup();
@@ -83,6 +88,38 @@ function createApi(
 }
 
 describe("DecisionSweepPage", () => {
+  it("positions Decision Sweep as a three-to-five decision batch", async () => {
+    const user = userEvent.setup();
+    const api = createApi();
+    render(<DecisionSweepPage profileId={profileId} api={api} />);
+
+    expect(
+      screen.getByLabelText("What decisions are you avoiding?"),
+    ).toHaveValue(canonicalBatch);
+    expect(
+      screen.getByText(
+        "Add 3–5 small, reversible decisions. One per line works best.",
+      ),
+    ).toBeVisible();
+
+    await user.click(
+      screen.getByRole("button", { name: "Run Decision Sweep" }),
+    );
+    expect(api.createSweep).toHaveBeenCalledWith(profileId, canonicalBatch);
+  });
+
+  it("uses correct singular result copy", async () => {
+    const user = userEvent.setup();
+    render(<DecisionSweepPage profileId={profileId} api={createApi()} />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Run Decision Sweep" }),
+    );
+
+    expect(await screen.findByText("1 recommendation")).toBeVisible();
+    expect(screen.queryByText("1 recommendations")).not.toBeInTheDocument();
+  });
+
   it("submits messy input, reveals alternatives, and accepts one recommendation", async () => {
     const user = userEvent.setup();
     const api = createApi();
@@ -90,7 +127,7 @@ describe("DecisionSweepPage", () => {
       <DecisionSweepPage profileId={profileId} api={api} />,
     );
 
-    const input = screen.getByLabelText("What are you avoiding deciding?");
+    const input = screen.getByLabelText("What decisions are you avoiding?");
     await user.clear(input);
     await user.type(
       input,
@@ -144,7 +181,7 @@ describe("DecisionSweepPage", () => {
     });
     render(<DecisionSweepPage profileId={profileId} api={api} />);
 
-    const input = screen.getByLabelText("What are you avoiding deciding?");
+    const input = screen.getByLabelText("What decisions are you avoiding?");
     await user.clear(input);
     await user.type(input, "Decline the optional meeting and send an update");
     await user.click(
@@ -165,15 +202,15 @@ describe("DecisionSweepPage", () => {
     render(<DecisionSweepPage profileId={profileId} api={api} />);
 
     await user.click(screen.getByRole("button", { name: "Quick call" }));
-    expect(screen.getByLabelText("What are you avoiding deciding?")).toHaveValue(
-      "Decline Friday’s optional status meeting to finish the proposal",
+    expect(screen.getByLabelText("What decisions are you avoiding?")).toHaveValue(
+      canonicalBatch,
     );
     await user.click(
       screen.getByRole("button", { name: "Run Decision Sweep" }),
     );
     expect(api.createSweep).toHaveBeenCalledWith(
       profileId,
-      `${"Decline Friday’s optional status meeting to finish the proposal"}\nUpdate format: Quick call`,
+      `${canonicalBatch}\n\nContext: Update format = Quick call`,
     );
   });
 
@@ -187,7 +224,9 @@ describe("DecisionSweepPage", () => {
     render(<DecisionSweepPage profileId={profileId} api={createApi()} />);
 
     expect(
-      screen.getByRole("textbox", { name: "What would you like help with?" }),
+      screen.getByRole("textbox", {
+        name: "What decisions would you like help with?",
+      }),
     ).toBeVisible();
     expect(
       screen.queryByRole("textbox", { name: /avoiding deciding/i }),
@@ -215,7 +254,7 @@ describe("DecisionSweepPage", () => {
     });
     await user.click(button);
     expect(button).toBeDisabled();
-    const input = screen.getByLabelText("What are you avoiding deciding?");
+    const input = screen.getByLabelText("What decisions are you avoiding?");
     const beforeContextClick = input.getAttribute("value") ?? input.textContent;
     const context = screen.getByRole("button", { name: "Quick call" });
     expect(context).toBeDisabled();
@@ -241,7 +280,7 @@ describe("DecisionSweepPage", () => {
     expect(form).not.toHaveClass("is-dirty");
 
     await user.type(
-      screen.getByLabelText("What are you avoiding deciding?"),
+      screen.getByLabelText("What decisions are you avoiding?"),
       " and protect one hour",
     );
     expect(form).toHaveClass("is-dirty");
@@ -283,7 +322,7 @@ describe("DecisionSweepPage", () => {
     await user.click(await screen.findByRole("button", { name: "Do this" }));
     await user.type(
       screen.getByRole("textbox", {
-        name: "What are you avoiding deciding?",
+        name: "What decisions are you avoiding?",
       }),
       " with a shorter update",
     );
@@ -395,7 +434,7 @@ describe("DecisionSweepPage", () => {
 
     await user.type(
       screen.getByRole("textbox", {
-        name: "What are you avoiding deciding?",
+        name: "What decisions are you avoiding?",
       }),
       " with a different time",
     );
@@ -447,7 +486,7 @@ describe("App bootstrap and static controls", () => {
         <App api={api} />
       </StrictMode>,
     );
-    expect(await screen.findByText("What are you avoiding deciding?")).toBeVisible();
+    expect(await screen.findByText("What decisions are you avoiding?")).toBeVisible();
     expect(api.createProfile).toHaveBeenCalledTimes(1);
   });
 
@@ -464,7 +503,7 @@ describe("App bootstrap and static controls", () => {
       "Easy Mode could not start.",
     );
     await user.click(screen.getByRole("button", { name: "Retry" }));
-    expect(await screen.findByText("What are you avoiding deciding?")).toBeVisible();
+    expect(await screen.findByText("What decisions are you avoiding?")).toBeVisible();
     expect(createProfile).toHaveBeenCalledTimes(2);
   });
 
@@ -472,7 +511,7 @@ describe("App bootstrap and static controls", () => {
     const user = userEvent.setup();
     render(<App api={bootstrapApi()} profileId={profileId} />);
     await user.click(screen.getByRole("button", { name: "Manual Mode" }));
-    expect(screen.getByLabelText("What are you avoiding deciding?")).toHaveFocus();
+    expect(screen.getByLabelText("What decisions are you avoiding?")).toHaveFocus();
     expect(screen.queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
     expect(screen.getByText("Settings")).toHaveAttribute("aria-disabled", "true");
     expect(screen.queryByRole("link", { name: "Decision Log" })).not.toBeInTheDocument();
