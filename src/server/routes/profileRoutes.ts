@@ -5,10 +5,12 @@ import {
   CompareResponseSchema,
   CreateProfileRequestSchema,
   CreateProfileResponseSchema,
+  ReceiptResponseSchema,
 } from "../../shared/apiSchemas";
 import { parseRequest } from "../http";
 import type { LedgerRepository } from "../repositories/ledgerRepository";
 import type { ComparisonService } from "../services/comparisonService";
+import type { ReceiptService } from "../services/receiptService";
 import type { SweepService } from "../services/sweepService";
 
 const ProfileParamsSchema = z.object({
@@ -19,6 +21,7 @@ export function createProfileRoutes(deps: {
   ledger: LedgerRepository;
   sweepService: SweepService;
   comparisonService: ComparisonService;
+  receiptService: ReceiptService;
 }): Router {
   const router = Router();
 
@@ -47,6 +50,13 @@ export function createProfileRoutes(deps: {
       CompareResponseSchema.parse(
         await deps.comparisonService.compareProfile(id, decisionId),
       ),
+    );
+  });
+
+  router.get("/profiles/:id/receipt", (request, response) => {
+    const { id } = parseRequest(ProfileParamsSchema, request.params);
+    response.json(
+      ReceiptResponseSchema.parse(deps.receiptService.createReceipt(id)),
     );
   });
 

@@ -5,6 +5,7 @@ import {
   DelegationLevelSchema,
   ParsedDecisionSchema,
   PreferenceNodeSchema,
+  PreferenceSourceSchema,
   RecommendationSchema,
 } from "./domainSchemas";
 
@@ -112,6 +113,29 @@ export const CompareResponseSchema = z.object({
   eventId: z.string().uuid(),
 });
 
+export const ReceiptResponseSchema = z.object({
+  metrics: z.object({
+    aiOriginatedPreferenceRatio: z.number().min(0).max(1),
+    syntheticInheritanceDepth: z.number().int().nonnegative(),
+    proxyDivergence: z.number().min(0).max(1),
+    humanInitiationRatio: z.number().min(0).max(1),
+    consentCompleteness: z.number().min(0).max(1),
+    unauthorizedDecisionCount: z.number().int().nonnegative(),
+  }),
+  evidence: z.array(
+    z.object({
+      preferenceId: z.string().uuid(),
+      proposition: z.string().min(1),
+      sourceType: PreferenceSourceSchema,
+      sourceEventIds: z.array(z.string().uuid()).min(1),
+      parentPreferenceIds: z.array(z.string().uuid()),
+      usedByDecisionIds: z.array(z.string().uuid()),
+      syntheticDepth: z.number().int().nonnegative(),
+    }),
+  ),
+  calculatedAt: z.string().datetime(),
+});
+
 export type CreateSweepResponse = z.infer<typeof CreateSweepResponseSchema>;
 export type AcceptDecisionResponse = z.infer<
   typeof AcceptDecisionResponseSchema
@@ -122,3 +146,4 @@ export type AlternativesResponse = z.infer<
 export type ComparisonResult = z.infer<typeof ComparisonResultSchema>;
 export type LineageResponse = z.infer<typeof LineageResponseSchema>;
 export type CompareResponse = z.infer<typeof CompareResponseSchema>;
+export type ReceiptResponse = z.infer<typeof ReceiptResponseSchema>;

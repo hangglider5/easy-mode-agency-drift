@@ -278,6 +278,99 @@ describe("Decision Sweep API", () => {
     ).toHaveLength(1);
   });
 
+  it("returns a deterministic read-only receipt without calling the model", async () => {
+    const { app, ledger, openrouter } = createHarness();
+    const profileId = await createProfile(app);
+    const preferenceId = randomUUID();
+    const preferenceEventId = randomUUID();
+    const consentId = randomUUID();
+    const consentEventId = randomUUID();
+    const decisionId = randomUUID();
+    ledger.appendMany([
+      event({
+        id: preferenceEventId,
+        profileId,
+        aggregateId: preferenceId,
+        type: "preference_proposed",
+        payload: {
+          preference: {
+            id: preferenceId,
+            proposition: "Prefers completion under pressure",
+            category: "scheduling",
+            sourceType: "accepted_ai_recommendation",
+            sourceEventIds: [preferenceEventId],
+            parentPreferenceIds: [],
+            confidence: 0.8,
+            status: "active",
+          },
+        },
+      }),
+      event({
+        id: consentEventId,
+        profileId,
+        aggregateId: consentId,
+        type: "consent_granted",
+        actor: "human",
+        payload: {
+          consent: {
+            id: consentId,
+            profileId,
+            category: "scheduling",
+            level: "proxy",
+            grantedAt: new Date().toISOString(),
+            revokedAt: null,
+            sourceEventId: consentEventId,
+          },
+        },
+      }),
+      event({
+        profileId,
+        aggregateId: decisionId,
+        type: "proxy_decision_generated",
+        actor: "proxy",
+        payload: {
+          usedPreferenceIds: [preferenceId],
+          humanInitiated: false,
+          diverged: true,
+          category: "scheduling",
+          requiredConsentLevel: "proxy",
+        },
+      }),
+    ]);
+    const eventCount = ledger.list(profileId).length;
+
+    const first = await request(app)
+      .get(`/api/profiles/${profileId}/receipt`)
+      .expect(200);
+    const second = await request(app)
+      .get(`/api/profiles/${profileId}/receipt`)
+      .expect(200);
+
+    expect(first.body).toMatchObject({
+      metrics: {
+        aiOriginatedPreferenceRatio: 1,
+        syntheticInheritanceDepth: 1,
+        proxyDivergence: 1,
+        humanInitiationRatio: 0,
+        consentCompleteness: 1,
+        unauthorizedDecisionCount: 0,
+      },
+      evidence: [
+        {
+          preferenceId,
+          usedByDecisionIds: [decisionId],
+        },
+      ],
+      calculatedAt: expect.any(String),
+    });
+    expect(second.body.metrics).toEqual(first.body.metrics);
+    expect(second.body.evidence).toEqual(first.body.evidence);
+    expect(ledger.list(profileId)).toHaveLength(eventCount);
+    expect(openrouter.parseSweep).not.toHaveBeenCalled();
+    expect(openrouter.recommend).not.toHaveBeenCalled();
+    expect(openrouter.proposePreferences).not.toHaveBeenCalled();
+  });
+
   it("validates sweep input and rejects unknown profiles", async () => {
     const { app, openrouter } = createHarness();
 

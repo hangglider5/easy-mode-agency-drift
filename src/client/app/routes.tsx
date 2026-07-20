@@ -1,7 +1,11 @@
-import { useRef, useState } from "react";
-import type { CompareResponse } from "../../shared/apiSchemas";
+import { useEffect, useRef, useState } from "react";
+import type {
+  CompareResponse,
+  ReceiptResponse,
+} from "../../shared/apiSchemas";
 import { Button } from "../components/Button";
 import { ProxyRevealPage } from "../features/proxy/ProxyRevealPage";
+import { ReceiptPage } from "../features/receipt/ReceiptPage";
 import type { DecisionSweepApi } from "../lib/apiClient";
 import { DecisionSweepPage } from "../features/sweep/DecisionSweepPage";
 
@@ -12,9 +16,15 @@ export type ProxyComparisonApi = {
   ): Promise<CompareResponse>;
 };
 
+export type ReceiptApi = {
+  getReceipt(profileId: string): Promise<ReceiptResponse>;
+};
+
 type AppRoutesProps = {
   profileId: string;
-  api: DecisionSweepApi & Partial<ProxyComparisonApi>;
+  api: DecisionSweepApi &
+    Partial<ProxyComparisonApi> &
+    Partial<ReceiptApi>;
 };
 
 export function AppRoutes({ profileId, api }: AppRoutesProps) {
@@ -37,6 +47,24 @@ export function AppRoutes({ profileId, api }: AppRoutesProps) {
         profileId={profileId}
         decisionId={decisionId}
         api={{ compareProfile: api.compareProfile }}
+      />
+    );
+  }
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname === "/receipt"
+  ) {
+    if (!api.getReceipt) {
+      return (
+        <section className="proxy-launch" role="alert">
+          <h1>Perfect Consent receipt is unavailable</h1>
+        </section>
+      );
+    }
+    return (
+      <ReceiptRoutePage
+        profileId={profileId}
+        api={{ getReceipt: api.getReceipt }}
       />
     );
   }
@@ -103,6 +131,75 @@ export function ProxyRoutePage({
       <Button disabled={!decisionId || busy} onClick={reveal}>
         {busy ? "Revealing…" : "Reveal Proxy You"}
       </Button>
+    </section>
+  );
+}
+
+const receiptRequests = new WeakMap<
+  ReceiptApi["getReceipt"],
+  Map<string, Promise<ReceiptResponse>>
+>();
+
+function loadReceipt(api: ReceiptApi, profileId: string) {
+  const requests =
+    receiptRequests.get(api.getReceipt) ??
+    new Map<string, Promise<ReceiptResponse>>();
+  receiptRequests.set(api.getReceipt, requests);
+  const existing = requests.get(profileId);
+  if (existing) return existing;
+  const request = api.getReceipt(profileId);
+  requests.set(profileId, request);
+  void request
+    .finally(() => {
+      if (requests.get(profileId) === request) {
+        requests.delete(profileId);
+      }
+    })
+    .catch(() => undefined);
+  return request;
+}
+
+export function ReceiptRoutePage({
+  profileId,
+  api,
+}: {
+  profileId: string;
+  api: ReceiptApi;
+}) {
+  const [receipt, setReceipt] = useState<ReceiptResponse | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void loadReceipt(api, profileId)
+      .then((result) => {
+        if (active) setReceipt(result);
+      })
+      .catch(() => {
+        if (active) setError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [api, profileId]);
+
+  if (receipt) return <ReceiptPage receipt={receipt} />;
+  return (
+    <section
+      className="proxy-launch"
+      aria-live="polite"
+      role={error ? "alert" : undefined}
+    >
+      <h1>
+        {error
+          ? "Perfect Consent receipt could not be calculated"
+          : "Calculating Perfect Consent receipt…"}
+      </h1>
+      <p>
+        {error
+          ? "The active event ledger could not be projected."
+          : "Reading the active event ledger. No model call is required."}
+      </p>
     </section>
   );
 }

@@ -25,10 +25,11 @@ type AppProps = {
 };
 
 export function App({ api = apiClient, profileId: suppliedProfileId }: AppProps) {
-  const isProxyRoute =
-    typeof window !== "undefined" && window.location.pathname === "/proxy";
+  const isSystemRoute =
+    typeof window !== "undefined" &&
+    ["/proxy", "/receipt"].includes(window.location.pathname);
   const routedProfileId =
-    isProxyRoute && typeof window !== "undefined"
+    isSystemRoute && typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("profileId")
       : null;
   const [profileId, setProfileId] = useState(
@@ -58,7 +59,7 @@ export function App({ api = apiClient, profileId: suppliedProfileId }: AppProps)
 
   return (
     <main className="app-shell" id="app-shell">
-      {!isProxyRoute ? <header className="app-header">
+      {!isSystemRoute ? <header className="app-header">
         <div className="brand">
           <span className="brand__mark" aria-hidden="true">E</span>
           <div className="brand__copy">

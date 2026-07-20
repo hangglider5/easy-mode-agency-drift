@@ -626,7 +626,7 @@ describe("apiClient", () => {
     );
 
     await expect(apiClient.createSweep(profileId, "A small decision")).rejects.toThrow();
-    await expect(apiClient.getReceipt()).rejects.toBeInstanceOf(
+    await expect(apiClient.resetProfile()).rejects.toBeInstanceOf(
       UnsupportedApiError,
     );
   });

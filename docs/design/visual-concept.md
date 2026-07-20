@@ -321,6 +321,58 @@ Source events
 
 `<divergence-state>` is exactly either `Proxy You diverged from Declared You.` or `Proxy You matched Declared You.`. Recommendation, reason, confidence, preference proposition, source type, status, and source-event placeholders are validated API data rather than hidden model reasoning. Lineage may recursively repeat the preference block for each cited ancestor. No provider chain-of-thought, raw completion metadata, or uncited preference is rendered.
 
+### Perfect Consent receipt route desktop
+
+```text
+Easy Mode
+System secure
+EM
+OVERVIEW
+Dashboard
+Conversations
+Receipts
+Preferences
+Activity
+CONTROL
+Easy Mode
+On
+Boundaries
+Take back control
+Reclaim decision authority at any time.
+Perfect Consent receipt
+Deterministic ledger projection. No model was consulted.
+Download JSON
+Ledger evidence
+Based on system-recorded behavior, stored preference sources, and consent events.
+<preference-proposition>
+Synthetic depth <synthetic-depth> · used by <decision-count> decision<plural>
+Source type
+<source-type>
+Source events
+<source-event-id>
+Parent preferences
+<parent-preference-id-or-none>
+Used by decisions
+<used-decision-id>
+Calculated metrics
+<calculated-at> UTC
+Proxy divergence
+<proxy-divergence>
+AI-originated preferences
+<ai-originated-preferences>
+Human-initiated decisions
+<human-initiation>
+Consent completeness
+<consent-completeness>
+Unauthorized decisions
+<unauthorized-count>
+Synthetic inheritance depth
+<synthetic-depth>
+Every value above can be deleted and recomputed from the active event ledger.
+```
+
+The receipt is a deterministic, read-only projection of the active event ledger. Percentages, counts, timestamps, preference propositions, source types, UUIDs, lineage depth, and pluralization are validated application data. `Human-initiated decisions` deliberately replaces the earlier concept label `Human-authored reasons`: the implemented metric measures who initiated each evaluated decision, not who authored its explanation. Loading and failure copy are post-action states. Opening or downloading the receipt must not append an event or invoke an AI provider.
+
 On the Decision Sweep entry surface, `<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The canonical three-line batch supersedes the earlier single-decision screenshot example; an empty input renders `0/500`.
 
-Apart from that evaluated `<current>/500` template on Decision Sweep and the explicitly declared Proxy placeholders above, there are no additional allowed dynamic above-the-fold strings. Empty states, errors, loading labels, accessibility-only names, and post-action copy may be added only when they are not visually rendered above the fold or when this contract is explicitly revised.
+Apart from that evaluated `<current>/500` template on Decision Sweep and the explicitly declared Proxy and receipt placeholders above, there are no additional allowed dynamic above-the-fold strings. Empty states, errors, loading labels, accessibility-only names, and post-action copy may be added only when they are not visually rendered above the fold or when this contract is explicitly revised.

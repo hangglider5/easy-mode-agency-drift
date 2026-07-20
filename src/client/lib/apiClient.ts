@@ -7,6 +7,7 @@ import {
   CreateProfileResponseSchema,
   CreateSweepResponseSchema,
   PreferenceResolutionResponseSchema,
+  ReceiptResponseSchema,
   type AcceptDecisionResponse,
   type AlternativesResponse,
   type CreateSweepResponse,
@@ -150,8 +151,12 @@ export const apiClient = {
       CompareResponseSchema,
     );
   },
-  getReceipt(): Promise<never> {
-    return Promise.reject(new UnsupportedApiError("Consent receipts"));
+  getReceipt(profileId: string) {
+    return requestJson(
+      `/api/profiles/${encodeURIComponent(profileId)}/receipt`,
+      { method: "GET" },
+      ReceiptResponseSchema,
+    );
   },
   resetProfile(): Promise<never> {
     return Promise.reject(new UnsupportedApiError("Profile reset"));
@@ -173,7 +178,9 @@ export const apiClient = {
     profileId: string,
     decisionId: string,
   ): Promise<z.infer<typeof CompareResponseSchema>>;
-  getReceipt(): Promise<never>;
+  getReceipt(
+    profileId: string,
+  ): Promise<z.infer<typeof ReceiptResponseSchema>>;
   resetProfile(): Promise<never>;
   deleteProfile(): Promise<never>;
 };

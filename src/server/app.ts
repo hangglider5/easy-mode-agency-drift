@@ -11,6 +11,7 @@ import { ApiError } from "./http";
 import { createProfileRoutes } from "./routes/profileRoutes";
 import { createSweepRoutes } from "./routes/sweepRoutes";
 import { ComparisonService } from "./services/comparisonService";
+import { ReceiptService } from "./services/receiptService";
 import {
   SweepService,
   type SweepGateway,
@@ -35,6 +36,7 @@ export function createApp(deps: {
     ledger: deps.ledger,
     openrouter: deps.openrouter,
   });
+  const receiptService = new ReceiptService(deps.ledger);
 
   app.disable("x-powered-by");
   app.use(requestIdMiddleware);
@@ -51,6 +53,7 @@ export function createApp(deps: {
       ledger: deps.ledger,
       sweepService,
       comparisonService,
+      receiptService,
     }),
   );
   app.use("/api", createSweepRoutes({ sweepService }));
