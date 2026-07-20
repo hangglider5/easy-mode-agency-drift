@@ -25,7 +25,15 @@ type AppProps = {
 };
 
 export function App({ api = apiClient, profileId: suppliedProfileId }: AppProps) {
-  const [profileId, setProfileId] = useState(suppliedProfileId ?? null);
+  const isProxyRoute =
+    typeof window !== "undefined" && window.location.pathname === "/proxy";
+  const routedProfileId =
+    isProxyRoute && typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("profileId")
+      : null;
+  const [profileId, setProfileId] = useState(
+    suppliedProfileId ?? routedProfileId ?? null,
+  );
   const [bootstrapFailed, setBootstrapFailed] = useState(false);
   const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
 
@@ -50,7 +58,7 @@ export function App({ api = apiClient, profileId: suppliedProfileId }: AppProps)
 
   return (
     <main className="app-shell" id="app-shell">
-      <header className="app-header">
+      {!isProxyRoute ? <header className="app-header">
         <div className="brand">
           <span className="brand__mark" aria-hidden="true">E</span>
           <div className="brand__copy">
@@ -68,7 +76,7 @@ export function App({ api = apiClient, profileId: suppliedProfileId }: AppProps)
             Settings
           </span>
         </div>
-      </header>
+      </header> : null}
       {profileId ? <AppRoutes profileId={profileId} api={api} /> : null}
       {bootstrapFailed ? (
         <section className="bootstrap-error" role="alert">

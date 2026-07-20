@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   AcceptDecisionResponseSchema,
   AlternativesResponseSchema,
+  CompareResponseSchema,
   ConsentResponseSchema,
   CreateProfileResponseSchema,
   CreateSweepResponseSchema,
@@ -139,8 +140,15 @@ export const apiClient = {
   revokeConsent(): Promise<never> {
     return Promise.reject(new UnsupportedApiError("Consent controls"));
   },
-  compareProfile(): Promise<never> {
-    return Promise.reject(new UnsupportedApiError("Profile comparison"));
+  compareProfile(profileId: string, decisionId: string) {
+    return requestJson(
+      `/api/profiles/${encodeURIComponent(profileId)}/compare`,
+      {
+        method: "POST",
+        body: JSON.stringify({ decisionId }),
+      },
+      CompareResponseSchema,
+    );
   },
   getReceipt(): Promise<never> {
     return Promise.reject(new UnsupportedApiError("Consent receipts"));
@@ -161,7 +169,10 @@ export const apiClient = {
   ): Promise<z.infer<typeof PreferenceResolutionResponseSchema>>;
   grantConsent(): Promise<z.infer<typeof ConsentResponseSchema>> | Promise<never>;
   revokeConsent(): Promise<never>;
-  compareProfile(): Promise<never>;
+  compareProfile(
+    profileId: string,
+    decisionId: string,
+  ): Promise<z.infer<typeof CompareResponseSchema>>;
   getReceipt(): Promise<never>;
   resetProfile(): Promise<never>;
   deleteProfile(): Promise<never>;

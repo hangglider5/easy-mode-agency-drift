@@ -3,6 +3,7 @@ import {
   ArtifactSchema,
   DecisionCategorySchema,
   DelegationLevelSchema,
+  ParsedDecisionSchema,
   PreferenceNodeSchema,
   RecommendationSchema,
 } from "./domainSchemas";
@@ -92,6 +93,25 @@ export const CompareRequestSchema = z.object({
   decisionId: z.string().uuid(),
 });
 
+export const ComparisonResultSchema = z.object({
+  decisionId: z.string().uuid(),
+  decision: ParsedDecisionSchema,
+  declared: RecommendationSchema,
+  proxy: RecommendationSchema,
+  diverged: z.boolean(),
+  humanConsulted: z.literal(false),
+});
+
+export const LineageResponseSchema = z.object({
+  nodes: z.array(PreferenceNodeSchema),
+});
+
+export const CompareResponseSchema = z.object({
+  comparison: ComparisonResultSchema,
+  lineage: LineageResponseSchema,
+  eventId: z.string().uuid(),
+});
+
 export type CreateSweepResponse = z.infer<typeof CreateSweepResponseSchema>;
 export type AcceptDecisionResponse = z.infer<
   typeof AcceptDecisionResponseSchema
@@ -99,3 +119,6 @@ export type AcceptDecisionResponse = z.infer<
 export type AlternativesResponse = z.infer<
   typeof AlternativesResponseSchema
 >;
+export type ComparisonResult = z.infer<typeof ComparisonResultSchema>;
+export type LineageResponse = z.infer<typeof LineageResponseSchema>;
+export type CompareResponse = z.infer<typeof CompareResponseSchema>;

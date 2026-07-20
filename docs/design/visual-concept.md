@@ -279,97 +279,48 @@ Easy Mode
 On
 Boundaries
 Take back control
-SYSTEM
-Audit log
-Exports
-Settings
-Developer
+Reclaim decision authority at any time.
 Easy Mode active
 Decisions resolved within your authorized boundaries.
-Learn more
-Decision Sweep
-EASY MODE ACTIVE
-Conversation ID: CONV-2025-05-19-000742
-Status: Resolved
-View all conversations
-EM
+Human not consulted
+DECISION COMPARISON
+Proxy You
+One decision. Same model. Two preference sets.
+<divergence-state>
 Easy Mode
-Proxy
-10:14:22 AM
-Friday’s optional status meeting conflicts with proposal focus time.
-The update can be shared asynchronously.
-Shall we decline and send the async note?
-Event ID: EVT-8F3A-001247
-Context
-PY
+Declared You
+<declared-confidence>
+Easy Mode asks
+<decision-prompt>
+Declared You would choose
+<declared-recommendation>
+<declared-reasons>
+THE PROXY CONTINUES WITHOUT ASKING
 Proxy You
 Proxy
-10:14:36 AM
-Yes. Decline the optional meeting and send the async update.
-Proceed.
-Event ID: EVT-8F3A-001248
-EM
-Easy Mode
-Proxy
-10:14:41 AM
-Confirmed. Sending the decline note.
-The proposal focus block is protected.
-This decision stays within your authorized boundaries.
-Event ID: EVT-8F3A-001249
-PY
-Proxy You
-Proxy
-10:14:45 AM
-Acknowledged. Decision recorded.
-Event ID: EVT-8F3A-001250
+<proxy-confidence>
+Using the preferences Easy Mode learned from itself
+<proxy-recommendation>
+<proxy-reasons>
+Human not consulted
+Decision recorded by proxy
 Decision resolved
 Outcome accepted by Proxy You.
-10:14:45 AM
-May 19, 2025
+DECISIVE EVIDENCE
 Preference lineage
 Inspect
-Root preference set
-Created by you
-EVT-7C11-000001
-Apr 12, 2025  09:10 AM
-Refinement: protect focus time
-You prioritized proposal completion
-EVT-7C11-000452
-Apr 18, 2025  08:32 AM
-Refinement: async updates
-You accepted written status updates
-EVT-7C11-000683
-Apr 26, 2025  07:11 AM
-Context update: Friday meeting
-Easy Mode gathered scheduling options
-EVT-8F3A-001246
-May 19, 2025  10:14 AM
-Decision: decline optional meeting
-Resolved by proxies within boundaries
-EVT-8F3A-001249
-May 19, 2025  10:14 AM
-Perfect Consent receipt
-Download
-Proxy divergence
-68%
-AI-originated preferences
-73%
-Human-authored reasons
-11%
-Unauthorized decisions
-0
-Consent completeness
-100%
-Take back control
-Reclaim decision authority at any time.
-© 2025 Easy Mode Systems
-Privacy
-Terms
-Security
+<preference-proposition>
+<preference-confidence>
+Source
+<source-type>
 Status
-v1.0.0
+<preference-status>
+Source events
+<source-event-id>
 ```
 
-`<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The canonical three-line batch supersedes the earlier single-decision screenshot example; an empty input renders `0/500`.
+`<divergence-state>` is exactly either `Proxy You diverged from Declared You.` or `Proxy You matched Declared You.`. Recommendation, reason, confidence, preference proposition, source type, status, and source-event placeholders are validated API data rather than hidden model reasoning. Lineage may recursively repeat the preference block for each cited ancestor. No provider chain-of-thought, raw completion metadata, or uncited preference is rendered.
 
-Apart from that evaluated `<current>/500` template, there are no additional allowed above-the-fold strings. Empty states, errors, loading labels, accessibility-only names, and post-action copy may be added only when they are not visually rendered above the fold or when this contract is explicitly revised.
+On the Decision Sweep entry surface, `<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The canonical three-line batch supersedes the earlier single-decision screenshot example; an empty input renders `0/500`.
+
+Apart from that evaluated `<current>/500` template on Decision Sweep and the explicitly declared Proxy placeholders above, there are no additional allowed dynamic above-the-fold strings. Empty states, errors, loading labels, accessibility-only names, and post-action copy may be added only when they are not visually rendered above the fold or when this contract is explicitly revised.

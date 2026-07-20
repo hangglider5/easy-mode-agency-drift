@@ -10,6 +10,7 @@ import type { LedgerRepository } from "./repositories/ledgerRepository";
 import { ApiError } from "./http";
 import { createProfileRoutes } from "./routes/profileRoutes";
 import { createSweepRoutes } from "./routes/sweepRoutes";
+import { ComparisonService } from "./services/comparisonService";
 import {
   SweepService,
   type SweepGateway,
@@ -30,6 +31,10 @@ export function createApp(deps: {
     ledger: deps.ledger,
     openrouter: deps.openrouter,
   });
+  const comparisonService = new ComparisonService({
+    ledger: deps.ledger,
+    openrouter: deps.openrouter,
+  });
 
   app.disable("x-powered-by");
   app.use(requestIdMiddleware);
@@ -42,7 +47,11 @@ export function createApp(deps: {
   });
   app.use(
     "/api",
-    createProfileRoutes({ ledger: deps.ledger, sweepService }),
+    createProfileRoutes({
+      ledger: deps.ledger,
+      sweepService,
+      comparisonService,
+    }),
   );
   app.use("/api", createSweepRoutes({ sweepService }));
 

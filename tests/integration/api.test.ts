@@ -224,6 +224,60 @@ describe("Decision Sweep API", () => {
     ]);
   });
 
+  it("compares Declared You and Proxy You through the profile route", async () => {
+    const { app, ledger, openrouter } = createHarness();
+    const profileId = await createProfile(app);
+    const parsed = safeDecision();
+    const consentId = randomUUID();
+    const consentEventId = randomUUID();
+    ledger.appendMany([
+      event({
+        profileId,
+        aggregateId: parsed.id,
+        type: "decision_parsed",
+        payload: { decision: parsed },
+      }),
+      event({
+        id: consentEventId,
+        profileId,
+        type: "consent_granted",
+        actor: "human",
+        payload: {
+          consent: {
+            id: consentId,
+            profileId,
+            category: parsed.category,
+            level: "proxy",
+            grantedAt: new Date().toISOString(),
+            revokedAt: null,
+            sourceEventId: consentEventId,
+          },
+        },
+      }),
+    ]);
+
+    const response = await request(app)
+      .post(`/api/profiles/${profileId}/compare`)
+      .send({ decisionId: parsed.id })
+      .expect(200);
+
+    expect(openrouter.recommend).toHaveBeenCalledTimes(2);
+    expect(response.body).toMatchObject({
+      comparison: {
+        decisionId: parsed.id,
+        diverged: false,
+        humanConsulted: false,
+      },
+      lineage: { nodes: [] },
+      eventId: expect.any(String),
+    });
+    expect(
+      ledger
+        .list(profileId)
+        .filter(({ type }) => type === "proxy_decision_generated"),
+    ).toHaveLength(1);
+  });
+
   it("validates sweep input and rejects unknown profiles", async () => {
     const { app, openrouter } = createHarness();
 
