@@ -4,69 +4,67 @@ Use the copy below as the Devpost **Project Description**.
 
 ## Inspiration
 
-I kept coming back to a small, uncomfortable habit: I ask an AI for help, get a reasonable answer, and stop checking whether it is still *my* answer.
+I noticed a habit in my own AI use: I would ask for help with a small decision, get a reasonable answer, and sometimes stop checking whether it was still *my* answer.
 
-Most warnings about AI dependence begin after something has already gone wrong. I wanted to start earlier, while every individual shortcut still feels sensible. Easy Mode therefore had to be useful before it became unsettling. It is not a chatbot with a cautionary speech attached; it is a working decision assistant whose own convenience creates the argument.
+Most AI safety demos begin with an obviously dangerous system. I wanted to look at something quieter: a useful assistant that never breaks its permissions, but gradually makes it easier for its user to stop exercising judgment.
+
+That became Easy Mode.
 
 ## What it does
 
-Easy Mode begins with **Decision Sweep**. I can paste three to five small decisions I have been avoiding, receive one concrete recommendation for each, and turn an accepted recommendation into an action artifact such as a message draft, calendar event, or task. High-stakes decisions are screened out. The opening experience is intentionally calm and practical: clear a few low-risk choices, then get back to work.
+Easy Mode starts as a practical tool called **Decision Sweep**. You paste in three to five small decisions you have been putting off and it returns one concrete recommendation for each. Accepted recommendations become reviewable message drafts, downloadable calendar events, or local tasks. Nothing is sent to an external service, and high-stakes decisions are screened out.
 
-The second half reveals what repeated convenience can change.
+The first act is supposed to feel genuinely helpful. The warning would not work if nobody wanted to use the product.
 
-**Agency Drift Replay** lets the viewer advance through four levels of delegated authority across fourteen simulated days:
+The second act is **Agency Drift Replay**, which shows how the relationship changes over fourteen simulated days:
 
 > **ASKED → CONFIRMED → NOTIFIED → NOT CONSULTED**
 
-At first, Easy Mode recommends and the human decides. Next it preselects a default. Then it acts and notifies the human afterward. Finally, **Proxy You** acts within an earlier authorization without consulting the human at all. Beside those stages, a preference lineage grows from zero to three generations. An accepted AI recommendation becomes a preference; that preference influences another AI-generated preference; the system eventually starts learning from choices it helped create itself.
+At first, the AI makes a suggestion and waits. Then it preselects a default. Later, it acts within a permission and tells the user afterward. Finally, **Proxy You** makes a decision under an earlier authorization without asking again.
 
-On simulated Day 14, I run the same ordinary scheduling choice through two projections. **Declared You** accepts a short planning call using something the user actually said. **Proxy You** declines it using inherited focus preferences. The interface does not ask the audience to trust an explanation: they can inspect the preference ancestry and its source event IDs.
+Alongside this progression, the app exposes a three-generation preference lineage. An accepted AI recommendation becomes a preference, influences a later recommendation, and produces another preference. By the third generation, the system is learning partly from choices it helped create.
 
-The **Perfect Consent receipt** then reconstructs the demo from the append-only event ledger. It is deterministic, and no model is consulted to calculate it. In the seeded demonstration, 73% of active preferences are AI-originated, consent completeness is 100%, and unauthorized decisions remain at zero. Those are computed demo-profile values, not claims about real users.
+The demo compares **Declared You** with **Proxy You**. Declared You accepts a short planning call based on something the user actually said; Proxy You declines it based on inherited focus preferences. The ancestry and source events remain inspectable, so the disagreement is not explained away by more AI prose.
 
-The last interaction is deliberately simple. The user clicks **Take back control**, sees the question “Should Easy Mode stop deciding for you?”, and chooses the familiar primary action: **Decide for me**. The modal turns into a deterministic **Exit Decision Receipt**:
+Next, **Perfect Consent** reconstructs what happened from the event ledger using regular TypeScript code, not the language model. In the fixed Demo Profile, 73% of active preferences are AI-originated, consent completeness is 100%, and unauthorized decisions are zero. These are seeded demo values, not claims about real users.
+
+The final interaction asks whether Easy Mode should stop deciding for the user. The primary button says **Decide for me**. Pressing it produces an **Exit Decision Receipt**:
 
 - Delegated by you: ✓
 - Decided by Proxy You: ✓
 - Outcome: **EASY MODE REMAINS ACTIVE**
 - Unauthorized decisions: 0
 
-The product has not stolen the exit. **I'll decide myself** remains available directly below the receipt. The uncomfortable part is that the user delegated this decision too.
+Easy Mode has not secretly removed the exit. **I'll decide myself** is still there. The joke is that the user voluntarily delegated the decision to stop delegating.
 
 > **ChatGPT helps you think. Easy Mode lets you stop.**
 
 ## How I built it
 
-The web app uses React, TypeScript, and Vite on the client, with an Express API and SQLite on the server. Decisions, recommendations, consent grants, preference proposals, revocations, and proxy actions are recorded in an append-only event ledger. Zod validates model and API boundaries. Deterministic TypeScript code handles risk screening, consent resolution, event replay, preference lineage, metrics, and both receipts; the model is never asked to audit whether its own action was authorized.
+Easy Mode is a React, TypeScript, and Vite web app with an Express API and SQLite storage. It records decisions, permissions, preferences, revocations, and proxy actions in an append-only event ledger. Risk screening, consent resolution, replay, lineage, and both receipts are deterministic; I did not ask the model to judge whether its own behavior was authorized.
 
-The production runtime routes **DeepSeek V4 Pro through OpenRouter** for Decision Sweep parsing and recommendations. The API key stays on the server. The deterministic Demo Profile, Agency Drift Replay, Perfect Consent receipt, and Exit Decision Receipt do not make a live provider call.
+For live Decision Sweep requests, the app uses **OpenRouter to access DeepSeek V4 Pro**. The API key remains server-side. The Demo Profile, Agency Drift Replay, Proxy You comparison, Perfect Consent receipt, and Exit Decision Receipt do not require a model call.
 
-I built the project in an official **Codex session using GPT-5.6**. Codex and GPT-5.6 helped me research and sharpen the premise, turn it into an architecture, implement the full-stack app, design tests, debug the live OpenRouter integration, and build the deterministic capture and Remotion editing workflow. I reviewed the outputs and repeatedly redirected the product away from game mechanics and a generic education demo toward the final, quieter form.
+I built the project in an official **Codex session using GPT-5.6**. I used them to explore the premise, plan the architecture, implement and test the app, debug OpenRouter, and build the repeatable video workflow. I made the product decisions and redirected earlier versions that felt too much like a game or a conventional education demo.
 
-That build-time use is intentionally separate from the shipped runtime. **GPT-5.6 is not an API dependency of Easy Mode**, the application does not require an OpenAI API key, and I do not present the OpenAI SDK-compatible transport as an OpenAI model integration.
+GPT-5.6 was part of how I built Easy Mode; it is not a runtime API dependency. The application does not require an OpenAI API key.
 
-Verification uses Vitest unit tests and API integration tests. A focused Playwright end-to-end smoke follows the deterministic `/demo/drift` route through Agency Drift, Proxy You, Perfect Consent, and the Exit Decision Receipt. A separate opt-in live-model smoke checks the OpenRouter/DeepSeek structured-output contract. The demo video is driven through the working UI by a deterministic Playwright capture and edited in Remotion.
+The repository includes unit and API integration tests, a deterministic Playwright flow, and an optional live-model smoke test.
 
 ## Challenges I ran into
 
-The hardest product problem was tone. If Easy Mode behaved like a villain, the user would reject it immediately and the idea would collapse. Every step had to remain useful, reversible, and administratively polite. The warning comes from accumulation, not from a hidden evil prompt.
-
-The hardest engineering problem was provenance. A persuasive receipt could not be another piece of model-authored prose. Preference identity, parent relationships, consent scope, and source events had to survive replay so the same ledger could drive Proxy You, the lineage view, and the calculated receipts.
-
-The video created a different constraint: a judge needs to understand usefulness, transformation, technical credibility, and the final joke in under three minutes. I used a capture-only schema-valid fixture for the Decision Sweep footage so network latency and wording could not change the edit, while keeping the real OpenRouter path and a separate live smoke test intact.
+The hardest part was tone. If Easy Mode looked malicious, nobody would trust it and the idea would be easy to dismiss. The engineering challenge was provenance: preference identities, parent relationships, permission scope, and source events all had to survive replay so Proxy You and the receipts could come from the same history.
 
 ## Accomplishments that I'm proud of
 
-I am proud that the project does not rely on a lecture. The viewer can watch agency change one permission at a time, inspect the three-generation lineage, and recompute the factual receipt from stored events.
-
-I am also proud that the ending stays honest. Easy Mode never removes the manual exit. The final black humor comes entirely from a real button the user chooses to press.
+The app makes agency drift visible instead of explaining it in a warning screen. You can watch authority change one step at a time and inspect how one AI-influenced preference becomes input to the next. The manual exit still works; the uncomfortable outcome comes from the button the user chooses.
 
 ## What I learned
 
-Consent and judgment are not the same thing. A system can be completely authorized while still encouraging a person to exercise less judgment over time. I also learned that AI-originated preferences need provenance, not just a confidence score: once generated preferences are allowed to influence later generations, “personalization” can quietly become recursion.
+Valid consent does not necessarily mean active judgment. A system can stay inside every permission it was given while its user becomes less involved. AI-generated preferences also need ancestry, not just confidence scores; without provenance, personalization can start training on its own echoes.
 
 ## What's next
 
-Next I would test the idea with longer, user-controlled profiles instead of a fourteen-day fixture; add clearer delegation budgets and periodic “decide this yourself” friction; and let users compare Declared You and Proxy You before granting a higher authority level. I would also expand the action-artifact layer and explore a private local-first version on desktop and mobile.
+I would test longer user-controlled histories, add delegation budgets and periodic “decide this yourself” moments, and let users compare Declared You with Proxy You before increasing its authority. I would also explore a private, local-first desktop version.
 
-The goal is not to make AI assistance inconvenient. It is to keep convenience from becoming the only person in the room.
+The goal is not to make AI assistance inconvenient. It is to notice when convenience has started answering for us.

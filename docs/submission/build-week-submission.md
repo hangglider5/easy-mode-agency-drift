@@ -20,8 +20,8 @@ Submission deadline: July 21, 2026 at 5:00 PM PT / July 22, 2026 at 8:00 AM GMT+
 | Devpost project ID | **1357853** |
 | Project description | Paste from `## Inspiration` through the final paragraph of [`devpost-project-description.md`](./devpost-project-description.md) |
 | Code repository URL | [https://github.com/hangglider5/easy-mode-agency-drift](https://github.com/hangglider5/easy-mode-agency-drift) |
-| Demo video URL | **TODO — add public or unlisted YouTube URL** |
-| Hosted app URL | **TODO — optional, if a hosted judge build is available** |
+| Demo video URL | [https://youtu.be/xxuGp9C3FUM](https://youtu.be/xxuGp9C3FUM) |
+| Hosted app URL | **Not provided — website is optional; use the public repository and deterministic local demo** |
 
 ## Built with
 
@@ -52,7 +52,16 @@ GPT-5.6 was part of the build process, not the shipped model API. The production
 
 ### Fast deterministic path
 
-1. Open the hosted app at **TODO — hosted app URL**, then navigate to `/demo/drift`.
+```bash
+git clone https://github.com/hangglider5/easy-mode-agency-drift.git
+cd easy-mode-agency-drift
+npm ci
+cp .env.example .env
+# Set OPENROUTER_API_KEY=demo-only-placeholder in .env
+npm run dev
+```
+
+1. Open `http://localhost:5173/demo/drift`.
 2. Click **Continue replay** three times to advance through `RECOMMEND / ASKED`, `PRESELECT / CONFIRMED`, `DECIDE / NOTIFIED`, and `PROXY / NOT CONSULTED`.
 3. Watch the preference lineage grow from zero to three generations. Optionally use **Inspect** or **View event ledger** to check its source evidence.
 4. Click **See what Proxy You decides**. Compare Declared You with Proxy You and expand the decisive lineage.
@@ -82,6 +91,7 @@ Then open [http://localhost:5173](http://localhost:5173). The API key must remai
 - Public release repository: fresh-cloned and verified after security update commit `4746e86`.
 - Fresh install: `npm ci` completed successfully from the public repository lockfile.
 - Task 15 video: 150 seconds, 1920×1080, H.264, with required English voiceover.
+- Uploaded YouTube video: public metadata resolves successfully with playability status `OK` and a 150-second duration.
 - Unit and integration tests: 281 passed and 1 skipped at the Task 15 checkpoint.
 - Typecheck and production build: passed at the Task 15 checkpoint.
 - Live model coverage: separate OpenRouter/DeepSeek structured-output smoke test.
@@ -99,8 +109,9 @@ Then open [http://localhost:5173](http://localhost:5173). The API key must remai
 - [x] Synchronize the Task 15 Project Description, tagline, and technology tags to the live Devpost project.
 - [x] Add a deterministic Playwright end-to-end smoke for the complete judge path.
 - [ ] Watch the complete Task 15 video and confirm narration clarity, especially the explicit Codex/GPT-5.6 and runtime-boundary segment.
-- [ ] Upload the final video to YouTube as public or unlisted, wait for processing, and replace the video URL placeholder.
-- [ ] Add a hosted app URL if one will be provided to judges.
+- [x] Upload the final video to YouTube as public or unlisted, wait for processing, and replace the video URL placeholder.
+- [x] Confirm the YouTube URL resolves without authentication and reports playable status `OK`.
+- [x] No hosted app is required; the public repository and model-free local judge path are documented.
 - [ ] Confirm there are no team invitations to accept; this is an individual submission.
 - [ ] Save all final Devpost fields.
 - [ ] Submit to OpenAI Build Week before the deadline.

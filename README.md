@@ -34,7 +34,7 @@ npm install
 cp .env.example .env
 ```
 
-Add your key to `.env`:
+For a live Decision Sweep, add your real key to `.env`:
 
 ```dotenv
 OPENROUTER_API_KEY=your_openrouter_api_key
@@ -43,6 +43,14 @@ OPENROUTER_MODEL=deepseek/deepseek-v4-pro
 DATABASE_PATH=./data/easy-mode.sqlite
 PORT=8787
 ```
+
+To review only the deterministic, model-free judge demo, no API credits are needed. Set a non-secret local placeholder instead:
+
+```dotenv
+OPENROUTER_API_KEY=demo-only-placeholder
+```
+
+Then use `/demo/drift`; that route never calls OpenRouter. Do not use the placeholder for the live Decision Sweep on `/`.
 
 Do not commit `.env`; it is ignored by Git. Then start the Vite client and Express API together:
 
