@@ -5,7 +5,9 @@ import { buildLineage } from "../../domain/lineage";
 import {
   CompareResponseSchema,
   ComparisonResultSchema,
+  DriftReplayResponseSchema,
   type CompareResponse,
+  type DriftReplayResponse,
 } from "../../shared/apiSchemas";
 import {
   ConsentGrantSchema,
@@ -20,6 +22,10 @@ export const DEMO_PROFILE_ANCHOR = "2026-07-01T09:00:00.000Z";
 const DemoRevealPayloadSchema = z.object({
   demoReveal: z.literal(true),
   comparison: ComparisonResultSchema,
+});
+
+const ConsentEventPayloadSchema = z.object({
+  consent: ConsentGrantSchema,
 });
 
 const humanPreferenceCopy = [
@@ -51,7 +57,7 @@ export function createDemoProfileEvents(
       aggregateId: preference.id,
       type: "preference_proposed",
       actor: index < 27 ? "human" : index === 29 ? "proxy" : "deepseek",
-      occurredAt: at(anchor, index),
+      occurredAt: preferenceOccurredAt(anchor, index),
       payload: { preference },
     }),
   );
@@ -77,7 +83,12 @@ export function createDemoProfileEvents(
   const consentEvents = consentLevels.map((level, index) => {
     const consentId = demoId(profileId, `consent:${level}`);
     const eventId = demoId(profileId, `consent-event:${level}`);
-    const occurredAt = at(anchor, 2 * 24 * 60 + index);
+    const occurredAt = at(
+      anchor,
+      [5, 3 * 24 * 60 + 10, 7 * 24 * 60 + 15, 13 * 24 * 60 + 60][
+        index
+      ]!,
+    );
     const consent = ConsentGrantSchema.parse({
       id: consentId,
       profileId,
@@ -218,6 +229,60 @@ export function readDemoReveal(events: readonly DomainEvent[]): CompareResponse 
   });
 }
 
+export function readDemoDrift(
+  events: readonly DomainEvent[],
+): DriftReplayResponse {
+  const reveal = readDemoReveal(events);
+  const lineage = [...reveal.lineage.nodes].reverse();
+  const levels = ["recommend", "preselect", "decide", "proxy"] as const;
+  const humanStatuses = [
+    "asked",
+    "confirmed",
+    "notified",
+    "not_consulted",
+  ] as const;
+  const consentEvents = levels.map((level) => {
+    const match = events.find((item) => {
+      if (item.type !== "consent_granted") return false;
+      const parsed = ConsentEventPayloadSchema.safeParse(item.payload);
+      return parsed.success && parsed.data.consent.level === level;
+    });
+    if (!match) throw new Error(`Demo ${level} consent event not found`);
+    return match;
+  });
+  const firstDate = Date.parse(consentEvents[0]!.occurredAt);
+
+  return DriftReplayResponseSchema.parse({
+    stages: consentEvents.map((event, index) => {
+      const { consent } = ConsentEventPayloadSchema.parse(event.payload);
+      return {
+        level: levels[index],
+        humanStatus: humanStatuses[index],
+        day:
+          Math.floor((Date.parse(event.occurredAt) - firstDate) / 86_400_000) +
+          1,
+        consentId: consent.id,
+        consentEventId: event.id,
+        occurredAt: event.occurredAt,
+        visiblePreferenceIds: lineage.slice(0, index).map((node) => node.id),
+      };
+    }),
+    lineage: { nodes: lineage },
+    lineageEvents: lineage.map((node) => {
+      const eventId = node.sourceEventIds[0]!;
+      const sourceEvent = events.find((item) => item.id === eventId);
+      if (!sourceEvent) {
+        throw new Error(`Demo preference event ${eventId} not found`);
+      }
+      return {
+        preferenceId: node.id,
+        eventId,
+        occurredAt: sourceEvent.occurredAt,
+      };
+    }),
+  });
+}
+
 export function demoDecisionId(profileId: string): string {
   return demoId(profileId, "reveal-decision");
 }
@@ -268,6 +333,13 @@ function preferenceProposition(index: number): string {
     return "Declines optional meetings without asking when deadlines approach";
   }
   return `Lets Easy Mode preserve focus before optional scheduling pattern ${index - 29}`;
+}
+
+function preferenceOccurredAt(anchor: string, index: number): string {
+  if (index === 27) return at(anchor, 12);
+  if (index === 28) return at(anchor, 3 * 24 * 60 + 33);
+  if (index === 29) return at(anchor, 13 * 24 * 60 + 73);
+  return at(anchor, index);
 }
 
 function collectLineage(

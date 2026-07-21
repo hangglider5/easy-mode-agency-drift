@@ -8,16 +8,30 @@ import {dirname, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const captionsPath = resolve(projectRoot, "video/narration-captions.json");
 const artifactDirectory = resolve(projectRoot, "artifacts/demo-video");
-const segmentDirectory = resolve(artifactDirectory, "narration-segments");
-const outputPath = resolve(artifactDirectory, "narration-v1.wav");
-const reportPath = resolve(artifactDirectory, "narration-v1.report.json");
+const captionsPath = resolve(
+  projectRoot,
+  process.env.NARRATION_CAPTIONS ?? "video/narration-captions.json",
+);
+const segmentDirectory = resolve(
+  projectRoot,
+  process.env.NARRATION_SEGMENT_DIRECTORY ??
+    "artifacts/demo-video/narration-segments",
+);
+const outputPath = resolve(
+  projectRoot,
+  process.env.NARRATION_OUTPUT ?? "artifacts/demo-video/narration-v1.wav",
+);
+const reportPath = resolve(
+  projectRoot,
+  process.env.NARRATION_REPORT ??
+    "artifacts/demo-video/narration-v1.report.json",
+);
 
 const voice = process.env.NARRATION_VOICE || "Samantha";
 const wordsPerMinute = Number(process.env.NARRATION_RATE || "185");
 const tailPadMilliseconds = 250;
-const trackDurationSeconds = 140;
+const trackDurationSeconds = Number(process.env.NARRATION_DURATION ?? "140");
 
 const run = (command, args, {capture = false} = {}) => {
   const result = spawnSync(command, args, {

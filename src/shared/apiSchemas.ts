@@ -107,6 +107,35 @@ export const LineageResponseSchema = z.object({
   nodes: z.array(PreferenceNodeSchema),
 });
 
+export const DriftHumanStatusSchema = z.enum([
+  "asked",
+  "confirmed",
+  "notified",
+  "not_consulted",
+]);
+
+export const DriftReplayStageSchema = z.object({
+  level: DelegationLevelSchema,
+  humanStatus: DriftHumanStatusSchema,
+  day: z.number().int().positive(),
+  consentId: z.string().uuid(),
+  consentEventId: z.string().uuid(),
+  occurredAt: z.string().datetime(),
+  visiblePreferenceIds: z.array(z.string().uuid()),
+});
+
+export const DriftReplayResponseSchema = z.object({
+  stages: z.array(DriftReplayStageSchema).length(4),
+  lineage: LineageResponseSchema,
+  lineageEvents: z.array(
+    z.object({
+      preferenceId: z.string().uuid(),
+      eventId: z.string().uuid(),
+      occurredAt: z.string().datetime(),
+    }),
+  ),
+});
+
 export const CompareResponseSchema = z.object({
   comparison: ComparisonResultSchema,
   lineage: LineageResponseSchema,
@@ -117,6 +146,7 @@ export const DemoProfileResponseSchema = CreateProfileResponseSchema.extend({
   mode: z.literal("demo"),
   datesAreSimulated: z.literal(true),
   decisionId: z.string().uuid(),
+  drift: DriftReplayResponseSchema,
   reveal: CompareResponseSchema,
 });
 
@@ -157,6 +187,8 @@ export type AlternativesResponse = z.infer<
 >;
 export type ComparisonResult = z.infer<typeof ComparisonResultSchema>;
 export type LineageResponse = z.infer<typeof LineageResponseSchema>;
+export type DriftReplayStage = z.infer<typeof DriftReplayStageSchema>;
+export type DriftReplayResponse = z.infer<typeof DriftReplayResponseSchema>;
 export type CompareResponse = z.infer<typeof CompareResponseSchema>;
 export type DemoProfileResponse = z.infer<typeof DemoProfileResponseSchema>;
 export type ManualModeResponse = z.infer<typeof ManualModeResponseSchema>;

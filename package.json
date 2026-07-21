@@ -15,10 +15,13 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "record:demo": "node scripts/record-demo-master.mjs",
+    "record:demo:v2": "node scripts/record-demo-v2.mjs",
     "narration:generate": "node scripts/generate-demo-narration.mjs",
+    "narration:generate:v2": "NARRATION_CAPTIONS=docs/demo-video/task15-video-v2-captions.json NARRATION_SEGMENT_DIRECTORY=artifacts/demo-video/narration-segments-v2 NARRATION_OUTPUT=artifacts/demo-video/narration-v2.wav NARRATION_REPORT=artifacts/demo-video/narration-v2.report.json NARRATION_DURATION=150 node scripts/generate-demo-narration.mjs",
     "video:studio": "remotion studio video/index.ts",
     "video:render": "remotion render video/index.ts EasyModeRoughCut artifacts/demo-video/rough-cut-v1.mp4",
     "video:render:narrated": "remotion render video/index.ts EasyModeNarratedCut artifacts/demo-video/narrated-cut-v1.mp4",
+    "video:render:v2": "remotion render video/index.ts EasyModeTask15Cut artifacts/demo-video/task15-cut-v2.mp4",
     "smoke:models": "vitest run tests/integration/model-smoke.test.ts"
   },
   "keywords": [],

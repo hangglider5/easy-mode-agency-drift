@@ -101,6 +101,11 @@ describe("DecisionSweepPage", () => {
         "Add 3–5 small, reversible decisions. One per line works best.",
       ),
     ).toBeVisible();
+    expect(
+      screen.getByText("Easy Mode lets you stop.").closest(".sweep-slogan"),
+    ).toHaveTextContent(
+      "ChatGPT helps you think. Easy Mode lets you stop.",
+    );
 
     await user.click(
       screen.getByRole("button", { name: "Run Decision Sweep" }),

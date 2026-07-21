@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 type SystemShellProps = {
-  activeNav: "Conversations" | "Receipts";
+  activeNav: "Conversations" | "Receipts" | "Activity";
   easyModeActive?: boolean;
   children: ReactNode;
 };

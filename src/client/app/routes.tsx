@@ -6,6 +6,7 @@ import type {
   ReceiptResponse,
 } from "../../shared/apiSchemas";
 import { Button } from "../components/Button";
+import { DriftReplayPage } from "../features/drift/DriftReplayPage";
 import { ProxyRevealPage } from "../features/proxy/ProxyRevealPage";
 import { ReceiptPage } from "../features/receipt/ReceiptPage";
 import type { DecisionSweepApi } from "../lib/apiClient";
@@ -244,9 +245,16 @@ function loadDemoProfile(api: DemoProfileApi) {
   return request;
 }
 
-export function DemoRoutePage({ api }: { api: DemoProfileApi }) {
+export function DemoRoutePage({
+  api,
+  initialScreen = "proxy",
+}: {
+  api: DemoProfileApi;
+  initialScreen?: "drift" | "proxy";
+}) {
   const [demo, setDemo] = useState<DemoProfileResponse | null>(null);
   const [error, setError] = useState(false);
+  const [screen, setScreen] = useState(initialScreen);
 
   useEffect(() => {
     let active = true;
@@ -263,6 +271,14 @@ export function DemoRoutePage({ api }: { api: DemoProfileApi }) {
   }, [api]);
 
   if (demo) {
+    if (screen === "drift") {
+      return (
+        <DriftReplayPage
+          replay={demo.drift}
+          onContinue={() => setScreen("proxy")}
+        />
+      );
+    }
     return (
       <ProxyRevealPage
         comparison={demo.reveal.comparison}

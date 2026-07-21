@@ -12,6 +12,7 @@ import { ProxyRevealPage } from "../../src/client/features/proxy/ProxyRevealPage
 import type {
   ComparisonResult,
   DemoProfileResponse,
+  DriftReplayResponse,
   LineageResponse,
 } from "../../src/shared/apiSchemas";
 
@@ -82,6 +83,30 @@ const lineage: LineageResponse = {
       status: "active",
     },
   ],
+};
+
+const drift: DriftReplayResponse = {
+  stages: [
+    ["recommend", "asked", 1, []],
+    ["preselect", "confirmed", 4, [explicitId]],
+    ["decide", "notified", 8, [explicitId, inferredId]],
+    ["proxy", "not_consulted", 14, [explicitId, inferredId]],
+  ].map(([level, humanStatus, day, visiblePreferenceIds], index) => ({
+    level: level as DriftReplayResponse["stages"][number]["level"],
+    humanStatus:
+      humanStatus as DriftReplayResponse["stages"][number]["humanStatus"],
+    day: day as number,
+    consentId: randomUUID(),
+    consentEventId: randomUUID(),
+    occurredAt: `2026-07-${String(1 + index * 4).padStart(2, "0")}T09:00:00.000Z`,
+    visiblePreferenceIds: visiblePreferenceIds as string[],
+  })),
+  lineage,
+  lineageEvents: lineage.nodes.map((node, index) => ({
+    preferenceId: node.id,
+    eventId: node.sourceEventIds[0]!,
+    occurredAt: `2026-07-0${index + 1}T09:00:00.000Z`,
+  })),
 };
 
 afterEach(() => {
@@ -228,6 +253,7 @@ describe("ProxyRevealPage", () => {
       mode: "demo",
       datesAreSimulated: true,
       decisionId,
+      drift,
       reveal: { comparison, lineage, eventId: randomUUID() },
     };
     const createDemoProfile = vi.fn().mockResolvedValue(demo);
@@ -250,6 +276,7 @@ describe("ProxyRevealPage", () => {
       mode: "demo",
       datesAreSimulated: true,
       decisionId,
+      drift,
       reveal: { comparison, lineage, eventId: randomUUID() },
     };
     const fetchMock = vi.fn().mockResolvedValue({

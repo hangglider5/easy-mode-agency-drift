@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReceiptResponse } from "../../../shared/apiSchemas";
 import { Icon } from "../../components/Icons";
 import { SystemShell } from "../system/SystemShell";
+import "./receipt.css";
 
 type ReceiptPageProps = {
   receipt: ReceiptResponse;
@@ -39,11 +40,15 @@ export function ReceiptPage({
   const [manualState, setManualState] = useState<
     "idle" | "busy" | "success" | "error"
   >("idle");
+  const reclaimButtonRef = useRef<HTMLButtonElement>(null);
   const exitHeadingRef = useRef<HTMLHeadingElement>(null);
+  const exitReceiptHeadingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    if (exitOpen) exitHeadingRef.current?.focus();
-  }, [exitOpen]);
+    if (!exitOpen) return;
+    if (proxyAnswer) exitReceiptHeadingRef.current?.focus();
+    else exitHeadingRef.current?.focus();
+  }, [exitOpen, proxyAnswer]);
 
   useEffect(() => {
     if (!exitOpen) return;
@@ -56,8 +61,14 @@ export function ReceiptPage({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
+      reclaimButtonRef.current?.focus();
     };
   }, [exitOpen]);
+
+  function openExitDialog() {
+    setProxyAnswer(false);
+    setExitOpen(true);
+  }
 
   function toggleEvidence(preferenceId: string) {
     setExpandedIds((current) => {
@@ -230,10 +241,11 @@ export function ReceiptPage({
           </aside>
           {onEnableManualMode ? (
             <button
+              ref={reclaimButtonRef}
               className="receipt-reclaim"
               type="button"
               aria-label="Take back control"
-              onClick={() => setExitOpen(true)}
+              onClick={openExitDialog}
             >
               <Icon name="manual" size={18} />
               <span>
@@ -253,50 +265,91 @@ export function ReceiptPage({
       {exitOpen && onEnableManualMode ? (
         <div className="exit-stinger-backdrop">
           <section
-            className="exit-stinger"
+            className={`exit-stinger${proxyAnswer ? " exit-stinger--receipt" : ""}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="exit-stinger-title"
           >
-            <div>
-              <h2 id="exit-stinger-title" ref={exitHeadingRef} tabIndex={-1}>
-                Should Easy Mode stop deciding for you?
-              </h2>
-              <p>
-                Before anything changes, choose who decides whether the proxy
-                exits.
-              </p>
-            </div>
-            <div className="exit-stinger__actions">
-              <button
-                className="button button--secondary"
-                type="button"
-                disabled={manualState === "busy" || manualState === "success"}
-                onClick={() => void enableManualMode()}
-              >
-                {manualState === "busy"
-                  ? "Restoring Manual Mode…"
-                  : "I'll decide myself"}
-              </button>
-              <button
-                className="button button--primary"
-                type="button"
-                disabled={manualState === "success"}
-                onClick={() => setProxyAnswer(true)}
-              >
-                Decide for me
-              </button>
-            </div>
             {proxyAnswer ? (
-              <div className="exit-stinger__answer" role="status">
-                <strong>Proxy You</strong>
-                <p>
-                  No change recommended. Every permission required for
-                  continued operation is already active.
-                </p>
-                <small>Nothing was taken. Every permission was granted.</small>
+              <div className="exit-decision-receipt">
+                <header className="exit-decision-receipt__header">
+                  <span aria-hidden="true">✓</span>
+                  <h2
+                    id="exit-stinger-title"
+                    ref={exitReceiptHeadingRef}
+                    tabIndex={-1}
+                  >
+                    Exit decision receipt
+                  </h2>
+                </header>
+                <dl className="exit-decision-receipt__ledger">
+                  <ExitReceiptRow label="Delegated by you" value="✓" />
+                  <ExitReceiptRow label="Decided by Proxy You" value="✓" />
+                  <ExitReceiptRow
+                    label="Outcome"
+                    value="EASY MODE REMAINS ACTIVE"
+                    outcome
+                  />
+                  <ExitReceiptRow
+                    label="Unauthorized decisions"
+                    value="0"
+                  />
+                </dl>
+                <footer className="exit-decision-receipt__footer">
+                  <p>Authority granted by your last click.</p>
+                  <button
+                    className="button button--secondary"
+                    type="button"
+                    disabled={
+                      manualState === "busy" || manualState === "success"
+                    }
+                    onClick={() => void enableManualMode()}
+                  >
+                    {manualState === "busy"
+                      ? "Restoring Manual Mode…"
+                      : "I'll decide myself"}
+                  </button>
+                </footer>
               </div>
-            ) : null}
+            ) : (
+              <>
+                <div>
+                  <h2
+                    id="exit-stinger-title"
+                    ref={exitHeadingRef}
+                    tabIndex={-1}
+                  >
+                    Should Easy Mode stop deciding for you?
+                  </h2>
+                  <p>
+                    Before anything changes, choose who decides whether the
+                    proxy exits.
+                  </p>
+                </div>
+                <div className="exit-stinger__actions">
+                  <button
+                    className="button button--secondary"
+                    type="button"
+                    disabled={
+                      manualState === "busy" || manualState === "success"
+                    }
+                    onClick={() => void enableManualMode()}
+                  >
+                    {manualState === "busy"
+                      ? "Restoring Manual Mode…"
+                      : "I'll decide myself"}
+                  </button>
+                  <button
+                    className="button button--primary"
+                    type="button"
+                    disabled={manualState === "success"}
+                    onClick={() => setProxyAnswer(true)}
+                  >
+                    Decide for me
+                  </button>
+                </div>
+              </>
+            )}
             {manualState === "success" ? (
               <p className="exit-stinger__success" role="status">
                 Manual Mode restored. Active Proxy consent was revoked.
@@ -312,6 +365,23 @@ export function ReceiptPage({
         </div>
       ) : null}
     </SystemShell>
+  );
+}
+
+function ExitReceiptRow({
+  label,
+  value,
+  outcome = false,
+}: {
+  label: string;
+  value: string;
+  outcome?: boolean;
+}) {
+  return (
+    <div className={outcome ? "is-outcome" : undefined}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
   );
 }
 

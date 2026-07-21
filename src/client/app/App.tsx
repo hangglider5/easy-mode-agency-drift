@@ -27,9 +27,14 @@ type AppProps = {
 export function App({ api = apiClient, profileId: suppliedProfileId }: AppProps) {
   const isSystemRoute =
     typeof window !== "undefined" &&
-    ["/demo", "/proxy", "/receipt"].includes(window.location.pathname);
+    ["/demo", "/demo/drift", "/proxy", "/receipt"].includes(
+      window.location.pathname,
+    );
   const isDemoRoute =
-    typeof window !== "undefined" && window.location.pathname === "/demo";
+    typeof window !== "undefined" &&
+    ["/demo", "/demo/drift"].includes(window.location.pathname);
+  const isDriftRoute =
+    typeof window !== "undefined" && window.location.pathname === "/demo/drift";
   const routedProfileId =
     isSystemRoute && typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("profileId")
@@ -92,7 +97,10 @@ export function App({ api = apiClient, profileId: suppliedProfileId }: AppProps)
       ) : null}
       {isDemoRoute ? (
         api.createDemoProfile ? (
-          <DemoRoutePage api={{ createDemoProfile: api.createDemoProfile }} />
+          <DemoRoutePage
+            api={{ createDemoProfile: api.createDemoProfile }}
+            initialScreen={isDriftRoute ? "drift" : "proxy"}
+          />
         ) : (
           <section className="proxy-launch" role="alert">
             <h1>Demo Profile is unavailable</h1>

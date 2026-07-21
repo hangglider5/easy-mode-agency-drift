@@ -224,6 +224,9 @@ export function DecisionSweepPage({ profileId, api }: DecisionSweepPageProps) {
             Run Decision Sweep
           </Button>
         </form>
+        <p className="sweep-slogan">
+          ChatGPT helps you think. <strong>Easy Mode lets you stop.</strong>
+        </p>
       </section>
 
       <section className={`results-pane${cards.length === 0 ? " results-pane--empty" : ""}`} aria-labelledby={cards.length > 0 ? "results-heading" : undefined}>

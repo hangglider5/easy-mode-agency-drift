@@ -13,4 +13,5 @@ artifacts/demo-video/*.mp4
 artifacts/demo-video/*.webm
 artifacts/demo-video/*.json
 artifacts/demo-video/*.wav
-artifacts/demo-video/narration-segments/
+artifacts/demo-video/narration-segments*/
+artifacts/demo-video/task*-review/

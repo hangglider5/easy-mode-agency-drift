@@ -14,6 +14,7 @@ import type { LedgerRepository } from "../repositories/ledgerRepository";
 import {
   createDemoProfileEvents,
   demoDecisionId,
+  readDemoDrift,
   readDemoReveal,
 } from "../fixtures/demoProfile";
 
@@ -30,6 +31,7 @@ export class DemoProfileService {
       mode: "demo",
       datesAreSimulated: true,
       decisionId: demoDecisionId(id),
+      drift: readDemoDrift(events),
       reveal: readDemoReveal(events),
     });
   }

@@ -1,5 +1,11 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -131,6 +137,11 @@ describe("ReceiptPage", () => {
     await user.click(
       screen.getByRole("button", { name: "Take back control" }),
     );
+    const questionHeading = screen.getByRole("heading", {
+      level: 2,
+      name: "Should Easy Mode stop deciding for you?",
+    });
+    expect(questionHeading).toHaveFocus();
     expect(
       screen.getByRole("dialog", {
         name: "Should Easy Mode stop deciding for you?",
@@ -143,7 +154,26 @@ describe("ReceiptPage", () => {
       screen.getByRole("button", { name: "Decide for me" }),
     );
 
-    expect(screen.getByText(/no change recommended/i)).toBeVisible();
+    const receiptHeading = screen.getByRole("heading", {
+      level: 2,
+      name: "Exit decision receipt",
+    });
+    expect(receiptHeading).toHaveFocus();
+    const exitReceipt = screen.getByRole("dialog", {
+      name: "Exit decision receipt",
+    });
+    expect(exitReceipt).toBeVisible();
+    expect(within(exitReceipt).getByText("Delegated by you")).toBeVisible();
+    expect(within(exitReceipt).getByText("Decided by Proxy You")).toBeVisible();
+    expect(
+      within(exitReceipt).getByText("EASY MODE REMAINS ACTIVE"),
+    ).toBeVisible();
+    expect(
+      within(exitReceipt).getByText("Unauthorized decisions"),
+    ).toBeVisible();
+    expect(
+      within(exitReceipt).getByText("Authority granted by your last click."),
+    ).toBeVisible();
     expect(
       screen.getByRole("button", { name: "I'll decide myself" }),
     ).toBeEnabled();

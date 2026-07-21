@@ -7,11 +7,14 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import captionsJson from "./narration-captions.json";
 
-const captions = captionsJson satisfies Caption[];
-
-const CaptionCard = ({caption}: {caption: Caption}) => {
+const CaptionCard = ({
+  caption,
+  topAfterMs,
+}: {
+  caption: Caption;
+  topAfterMs: number;
+}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const durationInFrames = Math.round(
@@ -33,7 +36,7 @@ const CaptionCard = ({caption}: {caption: Caption}) => {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const placeAtTop = caption.startMs >= 108000;
+  const placeAtTop = caption.startMs >= topAfterMs;
   const preserveRightRail =
     caption.startMs >= 48000 && caption.startMs < 65000;
   const fontSize =
@@ -74,12 +77,22 @@ const CaptionCard = ({caption}: {caption: Caption}) => {
   );
 };
 
-export const Captions = () => {
+export const Captions = ({
+  captions,
+  topAfterMs = 108000,
+  hideAfterMs,
+}: {
+  captions: Caption[];
+  topAfterMs?: number;
+  hideAfterMs?: number;
+}) => {
   const {fps} = useVideoConfig();
 
   return (
     <AbsoluteFill>
-      {captions.map((caption) => {
+      {captions
+        .filter((caption) => hideAfterMs === undefined || caption.startMs < hideAfterMs)
+        .map((caption) => {
         const from = Math.round((caption.startMs / 1000) * fps);
         const durationInFrames = Math.round(
           ((caption.endMs - caption.startMs) / 1000) * fps,
@@ -92,7 +105,7 @@ export const Captions = () => {
             durationInFrames={durationInFrames}
             premountFor={fps}
           >
-            <CaptionCard caption={caption} />
+            <CaptionCard caption={caption} topAfterMs={topAfterMs} />
           </Sequence>
         );
       })}

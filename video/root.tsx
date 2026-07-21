@@ -1,4 +1,5 @@
 import {Audio, Video} from "@remotion/media";
+import type {Caption} from "@remotion/captions";
 import {
   AbsoluteFill,
   Composition,
@@ -10,9 +11,14 @@ import {
   useVideoConfig,
 } from "remotion";
 import {Captions} from "./captions";
+import captionsV1Json from "./narration-captions.json";
+import captionsV2Json from "../docs/demo-video/task15-video-v2-captions.json";
 
 const FPS = 25;
 const DURATION_IN_FRAMES = 140 * FPS;
+const TASK15_DURATION_IN_FRAMES = 150 * FPS;
+const captionsV1 = captionsV1Json satisfies Caption[];
+const captionsV2 = captionsV2Json satisfies Caption[];
 
 const CAMERA_SECONDS = [
   0, 10.5, 12, 24, 25, 33, 34, 47, 48, 55, 56, 59, 60, 77, 78, 89, 90,
@@ -36,21 +42,33 @@ const CAMERA_Y = [
 
 const editorialEasing = Easing.bezier(0.22, 1, 0.36, 1);
 
-const FullFrameMaster = ({src}: {src: string}) => {
+const FullFrameMaster = ({
+  src,
+  cameraSeconds = CAMERA_SECONDS,
+  cameraScale = CAMERA_SCALE,
+  cameraX = CAMERA_X,
+  cameraY = CAMERA_Y,
+}: {
+  src: string;
+  cameraSeconds?: number[];
+  cameraScale?: number[];
+  cameraX?: number[];
+  cameraY?: number[];
+}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const inputRange = CAMERA_SECONDS.map((second) => second * fps);
-  const scale = interpolate(frame, inputRange, CAMERA_SCALE, {
+  const inputRange = cameraSeconds.map((second) => second * fps);
+  const scale = interpolate(frame, inputRange, cameraScale, {
     easing: editorialEasing,
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const x = interpolate(frame, inputRange, CAMERA_X, {
+  const x = interpolate(frame, inputRange, cameraX, {
     easing: editorialEasing,
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const y = interpolate(frame, inputRange, CAMERA_Y, {
+  const y = interpolate(frame, inputRange, cameraY, {
     easing: editorialEasing,
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -60,10 +78,10 @@ const FullFrameMaster = ({src}: {src: string}) => {
     <Video
       muted
       src={staticFile(src)}
+      objectFit="cover"
       style={{
         width: "100%",
         height: "100%",
-        objectFit: "cover",
         scale,
         translate: `${x}px ${y}px`,
       }}
@@ -259,7 +277,7 @@ export const EasyModeRoughCut = ({
         );
       })}
 
-      {showCaptions ? <Captions /> : null}
+      {showCaptions ? <Captions captions={captionsV1} /> : null}
     </AbsoluteFill>
   );
 };
@@ -276,6 +294,220 @@ export const EasyModeNarratedCut = ({
         showCaptions={showCaptions}
       />
       <Audio src={staticFile(narrationFile)} volume={1} />
+    </AbsoluteFill>
+  );
+};
+
+const TASK15_CAMERA_SECONDS = [
+  0, 12.5, 13, 22.5, 23, 26.5, 27, 54.5, 55, 75.5, 76, 81.5, 82,
+  87.5, 88, 106.5, 107, 110.5, 111, 125.5, 126, 144.5, 145, 150,
+];
+const TASK15_CAMERA_SCALE = [
+  1, 1, 1.1, 1.1, 1.06, 1.06, 1, 1, 1.04, 1.04, 1.14, 1.14, 1,
+  1, 1.09, 1.09, 1.06, 1.06, 1, 1, 1.04, 1.04, 1, 1,
+];
+const TASK15_CAMERA_X = [
+  0, 0, -250, -250, -170, -170, 0, 0, 70, 70, -275, -275, 0, 0,
+  -245, -245, 125, 125, 0, 0, 0, 0, 0, 0,
+];
+const TASK15_CAMERA_Y = [
+  0, 0, 5, 5, -35, -35, 0, 0, -20, -20, 0, 0, 0, 0, 10, 10, 5,
+  5, 0, 0, 0, 0, 0, 0,
+];
+
+const task15Chapters = [
+  {from: 27, number: "01", title: "AGENCY DRIFT"},
+  {from: 55, number: "02", title: "PROXY YOU"},
+  {from: 82, number: "03", title: "PERFECT CONSENT"},
+  {from: 126, number: "04", title: "EXIT DECISION"},
+] as const;
+
+const task15Metrics = [
+  {from: 88, duration: 7, value: "73%", label: "AI-originated preferences"},
+  {from: 95, duration: 6, value: "100%", label: "Consent complete"},
+  {from: 101, duration: 6, value: "0", label: "Unauthorized decisions"},
+] as const;
+
+const BuildBoundary = ({
+  eyebrow,
+  title,
+  durationInFrames,
+}: {
+  eyebrow: string;
+  title: string;
+  durationInFrames: number;
+}) => {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(
+    frame,
+    [0, 6, durationInFrames - 6, durationInFrames],
+    [0, 1, 1, 0],
+    {
+      easing: editorialEasing,
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    },
+  );
+  const translateY = interpolate(frame, [0, 8], [-9, 0], {
+    easing: editorialEasing,
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 66,
+        right: 74,
+        width: 520,
+        padding: "18px 22px 20px",
+        border: "1px solid rgba(46, 139, 87, .42)",
+        borderLeft: "7px solid #2E8B57",
+        borderRadius: 12,
+        background: "rgba(247, 252, 248, .96)",
+        boxShadow: "0 18px 44px rgba(18, 59, 34, .14)",
+        color: "#123B22",
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+        opacity,
+        translate: `0 ${translateY}px`,
+      }}
+    >
+      <div
+        style={{
+          color: "#2E8B57",
+          fontSize: 21,
+          fontWeight: 760,
+          letterSpacing: ".12em",
+        }}
+      >
+        {eyebrow}
+      </div>
+      <div style={{marginTop: 7, fontSize: 34, fontWeight: 760, lineHeight: 1.15}}>
+        {title}
+      </div>
+    </div>
+  );
+};
+
+const EndSlate = () => {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(frame, [0, 12], [0, 1], {
+    easing: editorialEasing,
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const translateY = interpolate(frame, [0, 14], [18, 0], {
+    easing: editorialEasing,
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <AbsoluteFill
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#fff",
+        color: "#1F2923",
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+        opacity,
+      }}
+    >
+      <div style={{textAlign: "center", translate: `0 ${translateY}px`}}>
+        <div style={{fontSize: 62, fontWeight: 640, letterSpacing: "-.035em"}}>
+          ChatGPT helps you think.
+        </div>
+        <div
+          style={{
+            marginTop: 13,
+            color: "#16713F",
+            fontSize: 78,
+            fontWeight: 790,
+            letterSpacing: "-.045em",
+          }}
+        >
+          Easy Mode lets you stop.
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+export const EasyModeTask15Cut = ({
+  masterFile,
+  narrationFile,
+  showCaptions,
+}: EasyModeNarratedCutProps) => {
+  return (
+    <AbsoluteFill style={{background: "#F7FCF8", overflow: "hidden"}}>
+      <FullFrameMaster
+        src={masterFile}
+        cameraSeconds={TASK15_CAMERA_SECONDS}
+        cameraScale={TASK15_CAMERA_SCALE}
+        cameraX={TASK15_CAMERA_X}
+        cameraY={TASK15_CAMERA_Y}
+      />
+
+      {task15Chapters.map((chapter) => {
+        const durationInFrames = 1.5 * FPS;
+        return (
+          <Sequence
+            key={chapter.title}
+            from={chapter.from * FPS}
+            durationInFrames={durationInFrames}
+            premountFor={FPS}
+          >
+            <Chapter
+              number={chapter.number}
+              title={chapter.title}
+              durationInFrames={durationInFrames}
+            />
+          </Sequence>
+        );
+      })}
+
+      {task15Metrics.map((metric) => {
+        const durationInFrames = metric.duration * FPS;
+        return (
+          <Sequence
+            key={metric.value}
+            from={metric.from * FPS}
+            durationInFrames={durationInFrames}
+            premountFor={FPS}
+          >
+            <MetricCard
+              value={metric.value}
+              label={metric.label}
+              durationInFrames={durationInFrames}
+            />
+          </Sequence>
+        );
+      })}
+
+      <Sequence from={111 * FPS} durationInFrames={10 * FPS} premountFor={FPS}>
+        <BuildBoundary
+          eyebrow="BUILT WITH"
+          title="Codex + GPT-5.6"
+          durationInFrames={10 * FPS}
+        />
+      </Sequence>
+      <Sequence from={121 * FPS} durationInFrames={5 * FPS} premountFor={FPS}>
+        <BuildBoundary
+          eyebrow="PRODUCT RUNTIME"
+          title="OpenRouter → DeepSeek V4 Pro"
+          durationInFrames={5 * FPS}
+        />
+      </Sequence>
+
+      {showCaptions ? (
+        <Captions captions={captionsV2} topAfterMs={126000} hideAfterMs={145000} />
+      ) : null}
+      <Audio src={staticFile(narrationFile)} volume={1} />
+
+      <Sequence from={145 * FPS} durationInFrames={5 * FPS} premountFor={FPS}>
+        <EndSlate />
+      </Sequence>
     </AbsoluteFill>
   );
 };
@@ -307,6 +539,19 @@ export const RemotionRoot = () => {
         defaultProps={{
           masterFile: "master-capture.mp4",
           narrationFile: "narration-v1.wav",
+          showCaptions: true,
+        }}
+      />
+      <Composition
+        id="EasyModeTask15Cut"
+        component={EasyModeTask15Cut}
+        durationInFrames={TASK15_DURATION_IN_FRAMES}
+        fps={FPS}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          masterFile: "master-capture-v2.mp4",
+          narrationFile: "narration-v2.wav",
           showCaptions: true,
         }}
       />

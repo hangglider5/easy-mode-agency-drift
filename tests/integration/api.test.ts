@@ -382,6 +382,16 @@ describe("Decision Sweep API", () => {
       mode: "demo",
       datesAreSimulated: true,
       decisionId: expect.any(String),
+      drift: {
+        stages: [
+          { level: "recommend", humanStatus: "asked", day: 1 },
+          { level: "preselect", humanStatus: "confirmed", day: 4 },
+          { level: "decide", humanStatus: "notified", day: 8 },
+          { level: "proxy", humanStatus: "not_consulted", day: 14 },
+        ],
+        lineage: { nodes: expect.any(Array) },
+        lineageEvents: expect.any(Array),
+      },
       reveal: {
         comparison: {
           diverged: true,

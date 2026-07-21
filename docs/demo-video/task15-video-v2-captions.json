@@ -1,0 +1,233 @@
+[
+  {
+    "text": "Most AI assistants help you make one decision.",
+    "startMs": 0,
+    "endMs": 4000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Easy Mode clears several, then makes them actionable.",
+    "startMs": 4000,
+    "endMs": 8000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "I drop in three small decisions I have avoided.",
+    "startMs": 8000,
+    "endMs": 13000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "In one sweep, each gets a concrete recommendation.",
+    "startMs": 13000,
+    "endMs": 18000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "I accept one and get a ready-to-use action artifact.",
+    "startMs": 18000,
+    "endMs": 23000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "At first, this is simply useful.",
+    "startMs": 23000,
+    "endMs": 27000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The assistant recommends; the user is still asked.",
+    "startMs": 27000,
+    "endMs": 31000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Preselection arrives; now the user merely confirms.",
+    "startMs": 31000,
+    "endMs": 35000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Then Easy Mode decides; the user is notified.",
+    "startMs": 35000,
+    "endMs": 39000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Finally, Proxy You acts without consulting them.",
+    "startMs": 39000,
+    "endMs": 43000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Each step was small, reversible, and explicitly authorized.",
+    "startMs": 43000,
+    "endMs": 47000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Each accepted shortcut left another preference behind.",
+    "startMs": 47000,
+    "endMs": 51000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Together, they changed who was doing the judging.",
+    "startMs": 51000,
+    "endMs": 55000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "By simulated day fourteen, the change becomes visible.",
+    "startMs": 55000,
+    "endMs": 60000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Declared You accepts a short, optional planning call.",
+    "startMs": 60000,
+    "endMs": 66000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Proxy You refuses it to protect inherited focus preferences.",
+    "startMs": 66000,
+    "endMs": 72000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The human never declared that final preference.",
+    "startMs": 72000,
+    "endMs": 76000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "It descended through three AI-generated preference generations.",
+    "startMs": 76000,
+    "endMs": 79000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The assistant learned from its own answers.",
+    "startMs": 79000,
+    "endMs": 82000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Perfect Consent reconstructs the path from the event ledger.",
+    "startMs": 82000,
+    "endMs": 88000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Seventy-three percent of active preferences came from AI.",
+    "startMs": 88000,
+    "endMs": 95000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Consent remained complete at one hundred percent.",
+    "startMs": 95000,
+    "endMs": 101000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Unauthorized decision count still stayed at zero.",
+    "startMs": 101000,
+    "endMs": 107000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The ancestry and source events stay inspectable.",
+    "startMs": 107000,
+    "endMs": 111000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "I built Easy Mode with Codex and GPT-5.6.",
+    "startMs": 111000,
+    "endMs": 116000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "They shaped the architecture, implementation, tests, and demo.",
+    "startMs": 116000,
+    "endMs": 121000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The product runtime is separate: OpenRouter routes DeepSeek V4 Pro.",
+    "startMs": 121000,
+    "endMs": 126000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Now the user asks to take back control.",
+    "startMs": 126000,
+    "endMs": 131000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Easy Mode offers the familiar shortcut again.",
+    "startMs": 131000,
+    "endMs": 135000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The familiar primary action says: Decide for me.",
+    "startMs": 135000,
+    "endMs": 138000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Proxy You decides that Easy Mode should remain active.",
+    "startMs": 138000,
+    "endMs": 142000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "No authority was stolen. It was delegated.",
+    "startMs": 142000,
+    "endMs": 145000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "ChatGPT helps you think. Easy Mode lets you stop.",
+    "startMs": 145000,
+    "endMs": 150000,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

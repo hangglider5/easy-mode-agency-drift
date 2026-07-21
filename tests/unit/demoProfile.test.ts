@@ -5,6 +5,7 @@ import { buildLineage, getSyntheticDepth } from "../../src/domain/lineage";
 import { calculateReceiptFromEvents } from "../../src/server/services/receiptService";
 import {
   createDemoProfileEvents,
+  readDemoDrift,
   readDemoReveal,
 } from "../../src/server/fixtures/demoProfile";
 
@@ -47,5 +48,34 @@ describe("deterministic Demo Profile", () => {
     });
     expect(reveal.lineage.nodes).toHaveLength(3);
     expect(reveal.lineage.nodes[0]?.sourceType).toBe("proxy_generated");
+  });
+
+  it("projects the four agency-drift stages from consent and lineage events", () => {
+    const events = createDemoProfileEvents(profileId, anchor);
+    const drift = readDemoDrift(events);
+
+    expect(drift.stages.map(({ level, humanStatus, day }) => ({
+      level,
+      humanStatus,
+      day,
+    }))).toEqual([
+      { level: "recommend", humanStatus: "asked", day: 1 },
+      { level: "preselect", humanStatus: "confirmed", day: 4 },
+      { level: "decide", humanStatus: "notified", day: 8 },
+      { level: "proxy", humanStatus: "not_consulted", day: 14 },
+    ]);
+    expect(drift.stages.map((stage) => stage.visiblePreferenceIds.length)).toEqual([
+      0,
+      1,
+      2,
+      3,
+    ]);
+    expect(drift.lineage.nodes.map((node) => node.proposition)).toEqual([
+      expect.stringMatching(/protects deep work/i),
+      expect.stringMatching(/defaults to asynchronous coordination/i),
+      expect.stringMatching(/declines optional meetings/i),
+    ]);
+    expect(drift.lineageEvents).toHaveLength(3);
+    expect(drift.lineageEvents.every((item) => item.occurredAt.startsWith("2026-07"))).toBe(true);
   });
 });
