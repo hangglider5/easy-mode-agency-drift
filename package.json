@@ -61,7 +61,7 @@
     "@types/supertest": "^7.2.1",
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.10",
-    "concurrently": "^10.0.3",
+    "concurrently": "^9.2.4",
     "jsdom": "^29.1.1",
     "playwright": "^1.61.1",
     "remotion": "4.0.495",
