@@ -79,6 +79,8 @@ Then open [http://localhost:5173](http://localhost:5173). The API key must remai
 
 ## Verification summary
 
+- Public release repository: fresh-cloned and verified after security update commit `4746e86`.
+- Fresh install: `npm ci` completed successfully from the public repository lockfile.
 - Task 15 video: 150 seconds, 1920×1080, H.264, with required English voiceover.
 - Unit and integration tests: 281 passed and 1 skipped at the Task 15 checkpoint.
 - Typecheck and production build: passed at the Task 15 checkpoint.
@@ -86,6 +88,7 @@ Then open [http://localhost:5173](http://localhost:5173). The API key must remai
 - Browser E2E: one focused, deterministic Playwright smoke covers Agency Drift → Proxy You → Perfect Consent → Exit Decision Receipt without a model call.
 - Video capture: deterministic Playwright-driven product capture.
 - Receipt path: ledger-driven and model-free.
+- Production dependency audit: 0 vulnerabilities. One low-severity advisory remains in the Windows-only development `esbuild` path pinned by `tsup`; no production dependency is affected.
 
 ## Remaining submission blockers
 
