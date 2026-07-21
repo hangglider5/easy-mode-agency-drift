@@ -14,7 +14,7 @@ Submission deadline: July 21, 2026 at 5:00 PM PT / July 22, 2026 at 8:00 AM GMT+
 | Tagline | **An AI assistant that clears your small decisions—then shows what happens when convenience starts choosing for you.** |
 | Participant type | **Individual** |
 | Primary category | **Apps for Your Life** |
-| Country | **China** |
+| Country | **Taiwan** |
 | Codex Session ID | **019f5fb3-6b56-78c1-84a9-96746f6f9de0** |
 | Devpost project | [https://devpost.com/software/easy-mode-agency-drift](https://devpost.com/software/easy-mode-agency-drift) |
 | Devpost project ID | **1357853** |
