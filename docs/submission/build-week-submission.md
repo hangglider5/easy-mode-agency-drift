@@ -19,7 +19,7 @@ Submission deadline: July 21, 2026 at 5:00 PM PT / July 22, 2026 at 8:00 AM GMT+
 | Devpost project | [https://devpost.com/software/easy-mode-agency-drift](https://devpost.com/software/easy-mode-agency-drift) |
 | Devpost project ID | **1357853** |
 | Project description | Paste from `## Inspiration` through the final paragraph of [`devpost-project-description.md`](./devpost-project-description.md) |
-| Code repository URL | **TODO — add final repository URL** |
+| Code repository URL | [https://github.com/hangglider5/easy-mode-agency-drift](https://github.com/hangglider5/easy-mode-agency-drift) |
 | Demo video URL | **TODO — add public or unlisted YouTube URL** |
 | Hosted app URL | **TODO — optional, if a hosted judge build is available** |
 
@@ -89,9 +89,9 @@ Then open [http://localhost:5173](http://localhost:5173). The API key must remai
 
 ## Remaining submission blockers
 
-- [ ] Create or publish the final code repository and replace the repository URL placeholder.
-- [ ] Choose repository visibility. If public, add an explicit license file; if private, grant judge access.
-- [ ] If the repository is private, share it with `testing@devpost.com` and `build-week-event@openai.com`.
+- [x] Create and publish the final code repository and replace the repository URL placeholder.
+- [x] Publish the repository publicly under the MIT License.
+- [x] Judge access is covered by the public repository; no private collaborator invitations are required.
 - [x] Add setup instructions, sample/demo data instructions, and Codex/GPT-5.6 build evidence to the repository README.
 - [x] Synchronize the Task 15 Project Description, tagline, and technology tags to the live Devpost project.
 - [x] Add a deterministic Playwright end-to-end smoke for the complete judge path.

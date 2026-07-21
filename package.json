@@ -33,7 +33,7 @@
     "openai-build-week"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "better-sqlite3": "^12.11.1",

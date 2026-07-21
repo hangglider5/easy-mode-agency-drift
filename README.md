@@ -217,3 +217,7 @@ docs/                Design, implementation, demo script, and QA evidence
 ## Prototype note
 
 Easy Mode is a hackathon prototype and a critique, not a production decision service. Use it only for the low-stakes examples it was designed to handle.
+
+## License
+
+[MIT](LICENSE) © 2026 Kenny Liang.
