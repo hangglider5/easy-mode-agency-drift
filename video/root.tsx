@@ -1,4 +1,4 @@
-import {Video} from "@remotion/media";
+import {Audio, Video} from "@remotion/media";
 import {
   AbsoluteFill,
   Composition,
@@ -209,6 +209,10 @@ export type EasyModeRoughCutProps = {
   showCaptions: boolean;
 };
 
+export type EasyModeNarratedCutProps = EasyModeRoughCutProps & {
+  narrationFile: string;
+};
+
 export const EasyModeRoughCut = ({
   masterFile,
   showCaptions,
@@ -260,6 +264,22 @@ export const EasyModeRoughCut = ({
   );
 };
 
+export const EasyModeNarratedCut = ({
+  masterFile,
+  narrationFile,
+  showCaptions,
+}: EasyModeNarratedCutProps) => {
+  return (
+    <AbsoluteFill>
+      <EasyModeRoughCut
+        masterFile={masterFile}
+        showCaptions={showCaptions}
+      />
+      <Audio src={staticFile(narrationFile)} volume={1} />
+    </AbsoluteFill>
+  );
+};
+
 export const RemotionRoot = () => {
   const defaultProps: EasyModeRoughCutProps = {
     masterFile: "master-capture.mp4",
@@ -267,14 +287,29 @@ export const RemotionRoot = () => {
   };
 
   return (
-    <Composition
-      id="EasyModeRoughCut"
-      component={EasyModeRoughCut}
-      durationInFrames={DURATION_IN_FRAMES}
-      fps={FPS}
-      width={1920}
-      height={1080}
-      defaultProps={defaultProps}
-    />
+    <>
+      <Composition
+        id="EasyModeRoughCut"
+        component={EasyModeRoughCut}
+        durationInFrames={DURATION_IN_FRAMES}
+        fps={FPS}
+        width={1920}
+        height={1080}
+        defaultProps={defaultProps}
+      />
+      <Composition
+        id="EasyModeNarratedCut"
+        component={EasyModeNarratedCut}
+        durationInFrames={DURATION_IN_FRAMES}
+        fps={FPS}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          masterFile: "master-capture.mp4",
+          narrationFile: "narration-v1.wav",
+          showCaptions: true,
+        }}
+      />
+    </>
   );
 };

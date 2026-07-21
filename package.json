@@ -15,8 +15,10 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "record:demo": "node scripts/record-demo-master.mjs",
+    "narration:generate": "node scripts/generate-demo-narration.mjs",
     "video:studio": "remotion studio video/index.ts",
     "video:render": "remotion render video/index.ts EasyModeRoughCut artifacts/demo-video/rough-cut-v1.mp4",
+    "video:render:narrated": "remotion render video/index.ts EasyModeNarratedCut artifacts/demo-video/narrated-cut-v1.mp4",
     "smoke:models": "vitest run tests/integration/model-smoke.test.ts"
   },
   "keywords": [],

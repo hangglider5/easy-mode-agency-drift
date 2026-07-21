@@ -7,7 +7,6 @@ Config.setCodec("h264");
 Config.setCrf(18);
 Config.setPixelFormat("yuv420p");
 Config.setConcurrency(1);
-Config.setMuted(true);
 Config.setEnforceAudioTrack(false);
 Config.setBrowserExecutable(chromium.executablePath());
 
