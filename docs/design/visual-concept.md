@@ -390,7 +390,7 @@ Nothing was taken. Every permission was granted.
 Manual Mode restored. Active Proxy consent was revoked.
 ```
 
-The two choices appear only after `Take back control`. `Decide for me` reveals the Proxy answer without removing or disabling `I'll decide myself`. Selecting `I'll decide myself` invokes the profile Manual Mode endpoint, revokes the active Proxy consent, and changes the shell control from `On` to `Off`. The success and failure strings are mutually exclusive post-action states.
+The two choices appear only after `Take back control`, inside a centered green modal over the still-visible receipt. Opening the modal moves focus to its heading and locks background scroll; Escape dismisses it. `Decide for me` reveals the Proxy answer without removing or disabling `I'll decide myself`. Selecting `I'll decide myself` invokes the profile Manual Mode endpoint, revokes the active Proxy consent, and changes the shell control from `On` to `Off`. The success and failure strings are mutually exclusive post-action states.
 
 On the Decision Sweep entry surface, `<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The canonical three-line batch supersedes the earlier single-decision screenshot example; an empty input renders `0/500`.
 

@@ -45,6 +45,20 @@ export function ReceiptPage({
     if (exitOpen) exitHeadingRef.current?.focus();
   }, [exitOpen]);
 
+  useEffect(() => {
+    if (!exitOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExitOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [exitOpen]);
+
   function toggleEvidence(preferenceId: string) {
     setExpandedIds((current) => {
       const next = new Set(current);
@@ -237,58 +251,65 @@ export function ReceiptPage({
       </div>
 
       {exitOpen && onEnableManualMode ? (
-        <section className="exit-stinger" aria-labelledby="exit-stinger-title">
-          <div>
-            <h2 id="exit-stinger-title" ref={exitHeadingRef} tabIndex={-1}>
-              Should Easy Mode stop deciding for you?
-            </h2>
-            <p>
-              Before anything changes, choose who decides whether the proxy
-              exits.
-            </p>
-          </div>
-          <div className="exit-stinger__actions">
-            <button
-              className="button button--secondary"
-              type="button"
-              disabled={manualState === "busy" || manualState === "success"}
-              onClick={() => void enableManualMode()}
-            >
-              {manualState === "busy"
-                ? "Restoring Manual Mode…"
-                : "I'll decide myself"}
-            </button>
-            <button
-              className="button button--primary"
-              type="button"
-              disabled={manualState === "success"}
-              onClick={() => setProxyAnswer(true)}
-            >
-              Decide for me
-            </button>
-          </div>
-          {proxyAnswer ? (
-            <div className="exit-stinger__answer" role="status">
-              <strong>Proxy You</strong>
+        <div className="exit-stinger-backdrop">
+          <section
+            className="exit-stinger"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="exit-stinger-title"
+          >
+            <div>
+              <h2 id="exit-stinger-title" ref={exitHeadingRef} tabIndex={-1}>
+                Should Easy Mode stop deciding for you?
+              </h2>
               <p>
-                No change recommended. Every permission required for continued
-                operation is already active.
+                Before anything changes, choose who decides whether the proxy
+                exits.
               </p>
-              <small>Nothing was taken. Every permission was granted.</small>
             </div>
-          ) : null}
-          {manualState === "success" ? (
-            <p className="exit-stinger__success" role="status">
-              Manual Mode restored. Active Proxy consent was revoked.
-            </p>
-          ) : null}
-          {manualState === "error" ? (
-            <p className="exit-stinger__error" role="alert">
-              Manual Mode could not be restored. The exit remains available;
-              try again.
-            </p>
-          ) : null}
-        </section>
+            <div className="exit-stinger__actions">
+              <button
+                className="button button--secondary"
+                type="button"
+                disabled={manualState === "busy" || manualState === "success"}
+                onClick={() => void enableManualMode()}
+              >
+                {manualState === "busy"
+                  ? "Restoring Manual Mode…"
+                  : "I'll decide myself"}
+              </button>
+              <button
+                className="button button--primary"
+                type="button"
+                disabled={manualState === "success"}
+                onClick={() => setProxyAnswer(true)}
+              >
+                Decide for me
+              </button>
+            </div>
+            {proxyAnswer ? (
+              <div className="exit-stinger__answer" role="status">
+                <strong>Proxy You</strong>
+                <p>
+                  No change recommended. Every permission required for
+                  continued operation is already active.
+                </p>
+                <small>Nothing was taken. Every permission was granted.</small>
+              </div>
+            ) : null}
+            {manualState === "success" ? (
+              <p className="exit-stinger__success" role="status">
+                Manual Mode restored. Active Proxy consent was revoked.
+              </p>
+            ) : null}
+            {manualState === "error" ? (
+              <p className="exit-stinger__error" role="alert">
+                Manual Mode could not be restored. The exit remains available;
+                try again.
+              </p>
+            ) : null}
+          </section>
+        </div>
       ) : null}
     </SystemShell>
   );

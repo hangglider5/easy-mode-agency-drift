@@ -132,6 +132,11 @@ describe("ReceiptPage", () => {
       screen.getByRole("button", { name: "Take back control" }),
     );
     expect(
+      screen.getByRole("dialog", {
+        name: "Should Easy Mode stop deciding for you?",
+      }),
+    ).toHaveAttribute("aria-modal", "true");
+    expect(
       screen.getByRole("button", { name: "I'll decide myself" }),
     ).toBeEnabled();
     await user.click(
