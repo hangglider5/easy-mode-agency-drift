@@ -107,6 +107,7 @@ Then open [http://localhost:5173](http://localhost:5173). The API key must remai
 - [x] Judge access is covered by the public repository; no private collaborator invitations are required.
 - [x] Add setup instructions, sample/demo data instructions, and Codex/GPT-5.6 build evidence to the repository README.
 - [x] Synchronize the Task 15 Project Description, tagline, and technology tags to the live Devpost project.
+- [x] Save the verified YouTube URL and the trimmed, humanized Project Description to Devpost project version 4; confirm both appear on the public page.
 - [x] Add a deterministic Playwright end-to-end smoke for the complete judge path.
 - [ ] Watch the complete Task 15 video and confirm narration clarity, especially the explicit Codex/GPT-5.6 and runtime-boundary segment.
 - [x] Upload the final video to YouTube as public or unlisted, wait for processing, and replace the video URL placeholder.
