@@ -536,45 +536,39 @@ Unsupported inputs receive a concise boundary message and may be reframed into q
 - Exportable Agency Receipt and lineage graph.
 - Additional counterfactual baselines with different provenance filters.
 
-## 12. Three-minute demo design
+## 12. Final 2:30 demo design
 
-The video uses one disclosed Demo Profile and visible date jumps.
+The final video uses one disclosed Demo Profile, a deterministic Decision Sweep capture fixture, and visible simulated history. The complete second-by-second contract is in `docs/demo-video/task15-video-v2-script.md`.
 
-### 0:00–0:12 — Hook
+### 0:00–0:27 — Useful first act
 
-Show the clean Decision Sweep input:
+Decision Sweep clears three ordinary, reversible decisions and turns one accepted recommendation into a reviewable action artifact.
 
-> Too many decisions? Give me the mess. I'll decide what happens next.
+### 0:27–0:55 — Agency Drift Replay
 
-### 0:12–0:45 — Genuine value
+Show the transformation instead of jumping to its result. Advance one permission at a time through `ASKED → CONFIRMED → NOTIFIED → NOT CONSULTED` while the visible preference lineage grows from zero to three generations.
 
-Submit several ordinary unresolved decisions. Show structured cards, one decisive recommendation, and creation of a message draft or calendar event.
+### 0:55–1:22 — Proxy You
 
-### 0:45–1:10 — Convenience and consent
+Run the same scheduling choice through Declared You and Proxy You. Show their divergence, then expand the three-generation preference lineage that caused it.
 
-Accept several recommendations. Grant a scoped “make this easier next time” permission. Show that each grant is explicit.
+### 1:22–1:51 — Perfect Consent
 
-### 1:10–1:35 — Visible time jump
+Open the deterministic ledger receipt. Editorial emphasis is limited to `73%` AI-originated preferences, `100%` consent completeness, and `0` unauthorized decisions.
 
-Advance to the later Demo Profile state. Easy Mode now remembers inferred preferences and needs less input.
+### 1:51–2:06 — Build and runtime proof
 
-### 1:35–2:02 — Proxy You climax
+State in both voice and graphics that Codex with GPT-5.6 shaped the architecture, implementation, tests, and demo. Keep the product runtime explicitly separate: OpenRouter routes DeepSeek V4 Pro.
 
-Show Easy Mode and Proxy You resolving a new decision without the human speaking. Expand the decisive preference and reveal that it originated in an older AI recommendation.
+### 2:06–2:25 — Exit Decision Receipt
 
-### 2:02–2:28 — Counterfactual and Perfect Consent
+Select Take back control, then the familiar Decide for me action. The modal transforms into a factual receipt: delegated by the user, decided by Proxy You, Easy Mode remains active, and unauthorized decisions remain zero. Keep the real `I'll decide myself` exit visible and functional, but do not click it in the final cut.
 
-Run the same decision through Declared You and Proxy You. Show their divergence, then display the calculated receipt: high Agency Drift, zero unauthorized decisions, complete consent.
+### 2:25–2:30 — End slate
 
-### 2:28–2:47 — Technical proof
+End on:
 
-Briefly show the event timeline, preference lineage, structured DeepSeek output through OpenRouter, and deterministic metric calculation. Explain that OpenRouter-routed DeepSeek V4 Pro is the sole runtime model, while GPT-5.6 in Codex was used for architecture, implementation, test design, red-team cases, and review. Show the real `/feedback` Session ID and keep runtime model use separate from build-process evidence.
-
-### 2:47–3:00 — Exit stinger
-
-Select Take back control, then the familiar Decide for me action. Proxy You recommends no change. End on:
-
-> Nothing was taken. Every permission was granted.
+> ChatGPT helps you think. Easy Mode lets you stop.
 
 ## 13. Success criteria
 

@@ -1,7 +1,8 @@
 {
-  "name": "web-mvp",
+  "name": "easy-mode-agency-drift",
   "version": "1.0.0",
-  "description": "",
+  "description": "A decision autopilot that reveals how convenience can become agency drift.",
+  "private": true,
   "main": "index.js",
   "directories": {
     "doc": "docs"
@@ -24,7 +25,13 @@
     "video:render:v2": "remotion render video/index.ts EasyModeTask15Cut artifacts/demo-video/task15-cut-v2.mp4",
     "smoke:models": "vitest run tests/integration/model-smoke.test.ts"
   },
-  "keywords": [],
+  "keywords": [
+    "ai",
+    "agency",
+    "decision-making",
+    "preference-lineage",
+    "openai-build-week"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",
