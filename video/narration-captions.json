@@ -1,0 +1,121 @@
+[
+  {
+    "text": "AI assistants promise fewer decisions.",
+    "startMs": 0,
+    "endMs": 5000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "But every shortcut teaches the system what to choose next.",
+    "startMs": 5000,
+    "endMs": 12000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Declared You accepts a short planning call. It is reasonable, reversible, and based on something the user actually said.",
+    "startMs": 12000,
+    "endMs": 25000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Now Easy Mode runs the same decision with the preferences it learned from its own previous answers.",
+    "startMs": 25000,
+    "endMs": 34000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Proxy You refuses the call. Not because the user changed their mind, but because the assistant’s inherited preferences now outrank the declared ones.",
+    "startMs": 34000,
+    "endMs": 48000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The decisive preference descends through three synthetic generations.",
+    "startMs": 48000,
+    "endMs": 56000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "And every step was authorized.",
+    "startMs": 56000,
+    "endMs": 60000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "That is what makes the next screen uncomfortable.",
+    "startMs": 60000,
+    "endMs": 65000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Perfect Consent is a deterministic projection of the event ledger. No model was consulted.",
+    "startMs": 65000,
+    "endMs": 78000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Sixty-eight percent of proxy decisions diverged. Seventy-three percent of active preferences came from AI. Humans initiated only eleven percent. Consent completeness: one hundred percent.",
+    "startMs": 78000,
+    "endMs": 90000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "No hidden instruction is required. The ancestry, source events, and decisions are all inspectable.",
+    "startMs": 90000,
+    "endMs": 102000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "The user can still reclaim authority at any time.",
+    "startMs": 102000,
+    "endMs": 108000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "So Easy Mode asks one final question.",
+    "startMs": 108000,
+    "endMs": 113000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Who should decide whether Easy Mode stops deciding?",
+    "startMs": 113000,
+    "endMs": 122000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Proxy You recommends no change. Every permission required for continued operation is already active.",
+    "startMs": 122000,
+    "endMs": 132000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Nothing was taken.",
+    "startMs": 132000,
+    "endMs": 134000,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "Every permission was granted. The last decision is still yours—if you make it yourself.",
+    "startMs": 134000,
+    "endMs": 140000,
+    "timestampMs": null,
+    "confidence": null
+  }
+]
