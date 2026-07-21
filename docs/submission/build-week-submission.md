@@ -113,7 +113,7 @@ Then open [http://localhost:5173](http://localhost:5173). The API key must remai
 - [x] Upload the final video to YouTube as public or unlisted, wait for processing, and replace the video URL placeholder.
 - [x] Confirm the YouTube URL resolves without authentication and reports playable status `OK`.
 - [x] No hosted app is required; the public repository and model-free local judge path are documented.
-- [ ] Confirm there are no team invitations to accept; this is an individual submission.
+- [x] Confirm the public Devpost project lists one member only (`Kenny Leung`); submitter type remains Individual.
 - [ ] Save all final Devpost fields.
 - [ ] Submit to OpenAI Build Week before the deadline.
 - [ ] Open Devpost **My Projects** and verify the project is marked **Submitted** in green, not merely saved as a draft.

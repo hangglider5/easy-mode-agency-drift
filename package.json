@@ -32,7 +32,7 @@
     "preference-lineage",
     "openai-build-week"
   ],
-  "author": "",
+  "author": "Kenny Leung",
   "license": "MIT",
   "type": "module",
   "dependencies": {

@@ -228,4 +228,4 @@ Easy Mode is a hackathon prototype and a critique, not a production decision ser
 
 ## License
 
-[MIT](LICENSE) © 2026 Kenny Liang.
+[MIT](LICENSE) © 2026 Kenny Leung.
