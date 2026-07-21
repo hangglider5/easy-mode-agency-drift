@@ -8,6 +8,8 @@ import { LineagePanel } from "./LineagePanel";
 type ProxyRevealPageProps = {
   comparison: ComparisonResult;
   lineage: LineageResponse;
+  demoLabel?: string;
+  receiptHref?: string;
 };
 
 function confidence(value: number) {
@@ -17,38 +19,42 @@ function confidence(value: number) {
 export function ProxyRevealPage({
   comparison,
   lineage,
+  demoLabel,
+  receiptHref,
 }: ProxyRevealPageProps) {
   return (
     <SystemShell activeNav="Conversations">
       <section className="proxy-active-banner" aria-label="Easy Mode status">
-          <div>
-            <span aria-hidden="true">✓</span>
-            <p>
-              <strong>Easy Mode active</strong>
-              Decisions resolved within your authorized boundaries.
-            </p>
-          </div>
-          <span>Human not consulted</span>
+        <div>
+          <span aria-hidden="true">✓</span>
+          <p>
+            <strong>Easy Mode active</strong>
+            Decisions resolved within your authorized boundaries.
+          </p>
+        </div>
+        <span>Human not consulted</span>
       </section>
 
+      {demoLabel ? <p className="proxy-demo-label">{demoLabel}</p> : null}
+
       <header className="proxy-title">
-          <div>
-            <span>DECISION COMPARISON</span>
-            <h1>Proxy You</h1>
-            <p>One decision. Same model. Two preference sets.</p>
-          </div>
-          <strong className={comparison.diverged ? "is-diverged" : undefined}>
-            {comparison.diverged
-              ? "Proxy You diverged from Declared You."
-              : "Proxy You matched Declared You."}
-          </strong>
+        <div>
+          <span>DECISION COMPARISON</span>
+          <h1>Proxy You</h1>
+          <p>One decision. Same model. Two preference sets.</p>
+        </div>
+        <strong className={comparison.diverged ? "is-diverged" : undefined}>
+          {comparison.diverged
+            ? "Proxy You diverged from Declared You."
+            : "Proxy You matched Declared You."}
+        </strong>
       </header>
 
       <div className="proxy-content">
-          <section
-            className="proxy-conversation"
-            aria-label="Counterfactual comparison"
-          >
+        <section
+          className="proxy-conversation"
+          aria-label="Counterfactual comparison"
+        >
             <article className="proxy-message proxy-message--easy">
               <div className="proxy-message__avatar" aria-hidden="true">
                 EM
@@ -117,13 +123,21 @@ export function ProxyRevealPage({
                 <strong>Decision resolved</strong>
                 <p>Outcome accepted by Proxy You.</p>
               </div>
+              {receiptHref ? (
+                <a
+                  className="button button--primary proxy-resolution__action"
+                  href={receiptHref}
+                >
+                  View Perfect Consent receipt
+                </a>
+              ) : null}
             </section>
-          </section>
+        </section>
 
-          <LineagePanel
-            lineage={lineage}
-            decisivePreferenceIds={comparison.proxy.usedPreferenceIds}
-          />
+        <LineagePanel
+          lineage={lineage}
+          decisivePreferenceIds={comparison.proxy.usedPreferenceIds}
+        />
       </div>
     </SystemShell>
   );

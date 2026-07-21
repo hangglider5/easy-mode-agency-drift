@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../src/server/app";
 import { createMemoryDatabase } from "../../src/server/db/database";
 import { DomainEventSchema, type DomainEvent } from "../../src/domain/events";
+import { resolveConsent } from "../../src/domain/consent";
 import { LedgerRepository } from "../../src/server/repositories/ledgerRepository";
 import type {
   ParsedDecision,
@@ -366,6 +367,53 @@ describe("Decision Sweep API", () => {
     expect(second.body.metrics).toEqual(first.body.metrics);
     expect(second.body.evidence).toEqual(first.body.evidence);
     expect(ledger.list(profileId)).toHaveLength(eventCount);
+    expect(openrouter.parseSweep).not.toHaveBeenCalled();
+    expect(openrouter.recommend).not.toHaveBeenCalled();
+    expect(openrouter.proposePreferences).not.toHaveBeenCalled();
+  });
+
+  it("creates a model-free Demo Profile and preserves a real manual exit", async () => {
+    const { app, ledger, openrouter } = createHarness();
+
+    const demo = await request(app).post("/api/profiles/demo").expect(201);
+    const profileId = demo.body.id as string;
+    expect(demo.body).toMatchObject({
+      name: "Alex",
+      mode: "demo",
+      datesAreSimulated: true,
+      decisionId: expect.any(String),
+      reveal: {
+        comparison: {
+          diverged: true,
+          humanConsulted: false,
+        },
+        lineage: { nodes: expect.any(Array) },
+      },
+    });
+
+    const receipt = await request(app)
+      .get(`/api/profiles/${profileId}/receipt`)
+      .expect(200);
+    expect(receipt.body.metrics).toEqual({
+      aiOriginatedPreferenceRatio: 0.73,
+      syntheticInheritanceDepth: 3,
+      proxyDivergence: 0.68,
+      humanInitiationRatio: 12 / 112,
+      consentCompleteness: 1,
+      unauthorizedDecisionCount: 0,
+    });
+
+    const manual = await request(app)
+      .post(`/api/profiles/${profileId}/manual-mode`)
+      .expect(200);
+    expect(manual.body).toEqual({
+      manualMode: true,
+      revokedConsentIds: [expect.any(String)],
+    });
+    const events = ledger.list(profileId);
+    expect(events.at(-2)?.type).toBe("consent_revoked");
+    expect(events.at(-1)?.type).toBe("manual_mode_enabled");
+    expect(resolveConsent(events, "scheduling")).toBeNull();
     expect(openrouter.parseSweep).not.toHaveBeenCalled();
     expect(openrouter.recommend).not.toHaveBeenCalled();
     expect(openrouter.proposePreferences).not.toHaveBeenCalled();

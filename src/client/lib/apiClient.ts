@@ -6,6 +6,8 @@ import {
   ConsentResponseSchema,
   CreateProfileResponseSchema,
   CreateSweepResponseSchema,
+  DemoProfileResponseSchema,
+  ManualModeResponseSchema,
   PreferenceResolutionResponseSchema,
   ReceiptResponseSchema,
   type AcceptDecisionResponse,
@@ -86,6 +88,14 @@ export const apiClient = {
     );
   },
 
+  createDemoProfile() {
+    return requestJson(
+      "/api/profiles/demo",
+      { method: "POST" },
+      DemoProfileResponseSchema,
+    );
+  },
+
   createSweep(profileId: string, rawInput: string) {
     return requestJson(
       "/api/sweeps",
@@ -158,6 +168,13 @@ export const apiClient = {
       ReceiptResponseSchema,
     );
   },
+  enableManualMode(profileId: string) {
+    return requestJson(
+      `/api/profiles/${encodeURIComponent(profileId)}/manual-mode`,
+      { method: "POST" },
+      ManualModeResponseSchema,
+    );
+  },
   resetProfile(): Promise<never> {
     return Promise.reject(new UnsupportedApiError("Profile reset"));
   },
@@ -166,6 +183,7 @@ export const apiClient = {
   },
 } satisfies DecisionSweepApi & {
   createProfile(name: string): Promise<z.infer<typeof CreateProfileResponseSchema>>;
+  createDemoProfile(): Promise<z.infer<typeof DemoProfileResponseSchema>>;
   resolvePreference(
     profileId: string,
     preferenceId: string,
@@ -181,6 +199,9 @@ export const apiClient = {
   getReceipt(
     profileId: string,
   ): Promise<z.infer<typeof ReceiptResponseSchema>>;
+  enableManualMode(
+    profileId: string,
+  ): Promise<z.infer<typeof ManualModeResponseSchema>>;
   resetProfile(): Promise<never>;
   deleteProfile(): Promise<never>;
 };

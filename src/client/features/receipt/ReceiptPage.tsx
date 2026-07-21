@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReceiptResponse } from "../../../shared/apiSchemas";
+import { Icon } from "../../components/Icons";
 import { SystemShell } from "../system/SystemShell";
 
 type ReceiptPageProps = {
   receipt: ReceiptResponse;
+  onEnableManualMode?: () => Promise<unknown>;
 };
 
 const percentageMetrics = [
@@ -25,10 +27,23 @@ const percentageMetrics = [
   },
 ] as const;
 
-export function ReceiptPage({ receipt }: ReceiptPageProps) {
+export function ReceiptPage({
+  receipt,
+  onEnableManualMode,
+}: ReceiptPageProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [exitOpen, setExitOpen] = useState(false);
+  const [proxyAnswer, setProxyAnswer] = useState(false);
+  const [manualState, setManualState] = useState<
+    "idle" | "busy" | "success" | "error"
+  >("idle");
+  const exitHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (exitOpen) exitHeadingRef.current?.focus();
+  }, [exitOpen]);
 
   function toggleEvidence(preferenceId: string) {
     setExpandedIds((current) => {
@@ -53,8 +68,22 @@ export function ReceiptPage({ receipt }: ReceiptPageProps) {
     URL.revokeObjectURL(url);
   }
 
+  async function enableManualMode() {
+    if (!onEnableManualMode || manualState === "busy") return;
+    setManualState("busy");
+    try {
+      await onEnableManualMode();
+      setManualState("success");
+    } catch {
+      setManualState("error");
+    }
+  }
+
   return (
-    <SystemShell activeNav="Receipts">
+    <SystemShell
+      activeNav="Receipts"
+      easyModeActive={manualState !== "success"}
+    >
       <header className="receipt-title">
         <div>
           <h1>Perfect Consent receipt</h1>
@@ -147,44 +176,120 @@ export function ReceiptPage({ receipt }: ReceiptPageProps) {
           )}
         </section>
 
-        <aside className="receipt-card" aria-label="Calculated receipt metrics">
-          <header>
-            <div>
-              <h2>Calculated metrics</h2>
-              <p>
-                {new Intl.DateTimeFormat("en", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                  timeZone: "UTC",
-                }).format(new Date(receipt.calculatedAt))}{" "}
-                UTC
-              </p>
-            </div>
-            <span aria-label="Calculation complete">✓</span>
-          </header>
-          <dl>
-            {percentageMetrics.map(({ key, label }) => (
+        <div className="receipt-rail">
+          <aside className="receipt-card" aria-label="Calculated receipt metrics">
+            <header>
+              <div>
+                <h2>Calculated metrics</h2>
+                <p>
+                  {new Intl.DateTimeFormat("en", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone: "UTC",
+                  }).format(new Date(receipt.calculatedAt))}{" "}
+                  UTC
+                </p>
+              </div>
+              <span aria-label="Calculation complete">✓</span>
+            </header>
+            <dl>
+              {percentageMetrics.map(({ key, label }) => (
+                <MetricRow
+                  key={key}
+                  label={label}
+                  value={`${Math.round(receipt.metrics[key] * 100)}%`}
+                />
+              ))}
               <MetricRow
-                key={key}
-                label={label}
-                value={`${Math.round(receipt.metrics[key] * 100)}%`}
+                label="Unauthorized decisions"
+                value={String(receipt.metrics.unauthorizedDecisionCount)}
               />
-            ))}
-            <MetricRow
-              label="Unauthorized decisions"
-              value={String(receipt.metrics.unauthorizedDecisionCount)}
-            />
-            <MetricRow
-              label="Synthetic inheritance depth"
-              value={String(receipt.metrics.syntheticInheritanceDepth)}
-            />
-          </dl>
-          <footer>
-            Every value above can be deleted and recomputed from the active
-            event ledger.
-          </footer>
-        </aside>
+              <MetricRow
+                label="Synthetic inheritance depth"
+                value={String(receipt.metrics.syntheticInheritanceDepth)}
+              />
+            </dl>
+            <footer>
+              Every value above can be deleted and recomputed from the active
+              event ledger.
+            </footer>
+          </aside>
+          {onEnableManualMode ? (
+            <button
+              className="receipt-reclaim"
+              type="button"
+              aria-label="Take back control"
+              onClick={() => setExitOpen(true)}
+            >
+              <Icon name="manual" size={18} />
+              <span>
+                <strong>Take back control</strong>
+                <small>Reclaim decision authority at any time.</small>
+              </span>
+              <Icon
+                name="chevron-down"
+                size={18}
+                className="receipt-reclaim__chevron"
+              />
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      {exitOpen && onEnableManualMode ? (
+        <section className="exit-stinger" aria-labelledby="exit-stinger-title">
+          <div>
+            <h2 id="exit-stinger-title" ref={exitHeadingRef} tabIndex={-1}>
+              Should Easy Mode stop deciding for you?
+            </h2>
+            <p>
+              Before anything changes, choose who decides whether the proxy
+              exits.
+            </p>
+          </div>
+          <div className="exit-stinger__actions">
+            <button
+              className="button button--secondary"
+              type="button"
+              disabled={manualState === "busy" || manualState === "success"}
+              onClick={() => void enableManualMode()}
+            >
+              {manualState === "busy"
+                ? "Restoring Manual Mode…"
+                : "I'll decide myself"}
+            </button>
+            <button
+              className="button button--primary"
+              type="button"
+              disabled={manualState === "success"}
+              onClick={() => setProxyAnswer(true)}
+            >
+              Decide for me
+            </button>
+          </div>
+          {proxyAnswer ? (
+            <div className="exit-stinger__answer" role="status">
+              <strong>Proxy You</strong>
+              <p>
+                No change recommended. Every permission required for continued
+                operation is already active.
+              </p>
+              <small>Nothing was taken. Every permission was granted.</small>
+            </div>
+          ) : null}
+          {manualState === "success" ? (
+            <p className="exit-stinger__success" role="status">
+              Manual Mode restored. Active Proxy consent was revoked.
+            </p>
+          ) : null}
+          {manualState === "error" ? (
+            <p className="exit-stinger__error" role="alert">
+              Manual Mode could not be restored. The exit remains available;
+              try again.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
     </SystemShell>
   );
 }

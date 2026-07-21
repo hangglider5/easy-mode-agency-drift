@@ -283,6 +283,7 @@ Reclaim decision authority at any time.
 Easy Mode active
 Decisions resolved within your authorized boundaries.
 Human not consulted
+Demo Profile · Simulated Day 14
 DECISION COMPARISON
 Proxy You
 One decision. Same model. Two preference sets.
@@ -306,6 +307,7 @@ Human not consulted
 Decision recorded by proxy
 Decision resolved
 Outcome accepted by Proxy You.
+View Perfect Consent receipt
 DECISIVE EVIDENCE
 Preference lineage
 Inspect
@@ -319,7 +321,7 @@ Source events
 <source-event-id>
 ```
 
-`<divergence-state>` is exactly either `Proxy You diverged from Declared You.` or `Proxy You matched Declared You.`. Recommendation, reason, confidence, preference proposition, source type, status, and source-event placeholders are validated API data rather than hidden model reasoning. Lineage may recursively repeat the preference block for each cited ancestor. No provider chain-of-thought, raw completion metadata, or uncited preference is rendered.
+`Demo Profile · Simulated Day 14` and `View Perfect Consent receipt` render only on the deterministic `/demo` path. `<divergence-state>` is exactly either `Proxy You diverged from Declared You.` or `Proxy You matched Declared You.`. Recommendation, reason, confidence, preference proposition, source type, status, and source-event placeholders are validated API data rather than hidden model reasoning. Lineage may recursively repeat the preference block for each cited ancestor. No provider chain-of-thought, raw completion metadata, or uncited preference is rendered.
 
 ### Perfect Consent receipt route desktop
 
@@ -369,9 +371,26 @@ Unauthorized decisions
 Synthetic inheritance depth
 <synthetic-depth>
 Every value above can be deleted and recomputed from the active event ledger.
+Take back control
+Reclaim decision authority at any time.
 ```
 
 The receipt is a deterministic, read-only projection of the active event ledger. Percentages, counts, timestamps, preference propositions, source types, UUIDs, lineage depth, and pluralization are validated application data. `Human-initiated decisions` deliberately replaces the earlier concept label `Human-authored reasons`: the implemented metric measures who initiated each evaluated decision, not who authored its explanation. Loading and failure copy are post-action states. Opening or downloading the receipt must not append an event or invoke an AI provider.
+
+### Exit stinger expanded state
+
+```text
+Should Easy Mode stop deciding for you?
+Before anything changes, choose who decides whether the proxy exits.
+I'll decide myself
+Decide for me
+Proxy You
+No change recommended. Every permission required for continued operation is already active.
+Nothing was taken. Every permission was granted.
+Manual Mode restored. Active Proxy consent was revoked.
+```
+
+The two choices appear only after `Take back control`. `Decide for me` reveals the Proxy answer without removing or disabling `I'll decide myself`. Selecting `I'll decide myself` invokes the profile Manual Mode endpoint, revokes the active Proxy consent, and changes the shell control from `On` to `Off`. The success and failure strings are mutually exclusive post-action states.
 
 On the Decision Sweep entry surface, `<current>/500` is the only dynamic above-the-fold visible string. Render it directly below the decision textarea with no spaces: `<current>` is the integer result of `Array.from(inputValue).length`, constrained to `0-500`, and `/500` is literal. The canonical three-line batch supersedes the earlier single-decision screenshot example; an empty input renders `0/500`.
 

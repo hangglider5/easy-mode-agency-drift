@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 type SystemShellProps = {
   activeNav: "Conversations" | "Receipts";
+  easyModeActive?: boolean;
   children: ReactNode;
 };
 
@@ -15,6 +16,7 @@ const overviewItems = [
 
 export function SystemShell({
   activeNav,
+  easyModeActive = true,
   children,
 }: SystemShellProps) {
   return (
@@ -51,9 +53,12 @@ export function SystemShell({
           <div className="proxy-sidebar__control">
             <span>
               <strong>Easy Mode</strong>
-              <small>On</small>
+              <small>{easyModeActive ? "On" : "Off"}</small>
             </span>
-            <i aria-hidden="true" />
+            <i
+              className={easyModeActive ? undefined : "is-off"}
+              aria-hidden="true"
+            />
           </div>
           <span className="proxy-sidebar__item">Boundaries</span>
         </div>

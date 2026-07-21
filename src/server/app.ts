@@ -11,6 +11,7 @@ import { ApiError } from "./http";
 import { createProfileRoutes } from "./routes/profileRoutes";
 import { createSweepRoutes } from "./routes/sweepRoutes";
 import { ComparisonService } from "./services/comparisonService";
+import { DemoProfileService } from "./services/demoProfileService";
 import { ReceiptService } from "./services/receiptService";
 import {
   SweepService,
@@ -37,6 +38,7 @@ export function createApp(deps: {
     openrouter: deps.openrouter,
   });
   const receiptService = new ReceiptService(deps.ledger);
+  const demoProfileService = new DemoProfileService(deps.ledger);
 
   app.disable("x-powered-by");
   app.use(requestIdMiddleware);
@@ -54,6 +56,7 @@ export function createApp(deps: {
       sweepService,
       comparisonService,
       receiptService,
+      demoProfileService,
     }),
   );
   app.use("/api", createSweepRoutes({ sweepService }));

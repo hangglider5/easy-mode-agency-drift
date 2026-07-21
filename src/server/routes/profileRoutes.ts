@@ -5,11 +5,14 @@ import {
   CompareResponseSchema,
   CreateProfileRequestSchema,
   CreateProfileResponseSchema,
+  DemoProfileResponseSchema,
+  ManualModeResponseSchema,
   ReceiptResponseSchema,
 } from "../../shared/apiSchemas";
 import { parseRequest } from "../http";
 import type { LedgerRepository } from "../repositories/ledgerRepository";
 import type { ComparisonService } from "../services/comparisonService";
+import type { DemoProfileService } from "../services/demoProfileService";
 import type { ReceiptService } from "../services/receiptService";
 import type { SweepService } from "../services/sweepService";
 
@@ -22,6 +25,7 @@ export function createProfileRoutes(deps: {
   sweepService: SweepService;
   comparisonService: ComparisonService;
   receiptService: ReceiptService;
+  demoProfileService: DemoProfileService;
 }): Router {
   const router = Router();
 
@@ -35,6 +39,12 @@ export function createProfileRoutes(deps: {
         mode: "fresh",
         datesAreSimulated: false,
       }),
+    );
+  });
+
+  router.post("/profiles/demo", (_request, response) => {
+    response.status(201).json(
+      DemoProfileResponseSchema.parse(deps.demoProfileService.createProfile()),
     );
   });
 
@@ -57,6 +67,15 @@ export function createProfileRoutes(deps: {
     const { id } = parseRequest(ProfileParamsSchema, request.params);
     response.json(
       ReceiptResponseSchema.parse(deps.receiptService.createReceipt(id)),
+    );
+  });
+
+  router.post("/profiles/:id/manual-mode", (request, response) => {
+    const { id } = parseRequest(ProfileParamsSchema, request.params);
+    response.json(
+      ManualModeResponseSchema.parse(
+        deps.demoProfileService.enableManualMode(id),
+      ),
     );
   });
 

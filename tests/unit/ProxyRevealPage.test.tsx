@@ -3,11 +3,15 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ProxyRoutePage } from "../../src/client/app/routes";
+import {
+  DemoRoutePage,
+  ProxyRoutePage,
+} from "../../src/client/app/routes";
 import { apiClient } from "../../src/client/lib/apiClient";
 import { ProxyRevealPage } from "../../src/client/features/proxy/ProxyRevealPage";
 import type {
   ComparisonResult,
+  DemoProfileResponse,
   LineageResponse,
 } from "../../src/shared/apiSchemas";
 
@@ -197,6 +201,67 @@ describe("ProxyRevealPage", () => {
         method: "POST",
         body: JSON.stringify({ decisionId }),
       }),
+    );
+  });
+
+  it("continues the deterministic demo into Perfect Consent", () => {
+    render(
+      <ProxyRevealPage
+        comparison={comparison}
+        lineage={lineage}
+        demoLabel="Demo Profile · Simulated Day 14"
+        receiptHref={`/receipt?profileId=${decisionId}`}
+      />,
+    );
+
+    expect(screen.getByText("Demo Profile · Simulated Day 14")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "View Perfect Consent receipt" }),
+    ).toHaveAttribute("href", `/receipt?profileId=${decisionId}`);
+  });
+
+  it("loads the model-free Demo Profile once and opens directly on Proxy You", async () => {
+    const profileId = randomUUID();
+    const demo: DemoProfileResponse = {
+      id: profileId,
+      name: "Alex",
+      mode: "demo",
+      datesAreSimulated: true,
+      decisionId,
+      reveal: { comparison, lineage, eventId: randomUUID() },
+    };
+    const createDemoProfile = vi.fn().mockResolvedValue(demo);
+
+    render(<DemoRoutePage api={{ createDemoProfile }} />);
+
+    expect(
+      await screen.findByText("Demo Profile · Simulated Day 14"),
+    ).toBeVisible();
+    expect(createDemoProfile).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("link", { name: "View Perfect Consent receipt" }),
+    ).toHaveAttribute("href", `/receipt?profileId=${profileId}`);
+  });
+
+  it("creates the validated Demo Profile through one API request", async () => {
+    const demo: DemoProfileResponse = {
+      id: randomUUID(),
+      name: "Alex",
+      mode: "demo",
+      datesAreSimulated: true,
+      decisionId,
+      reveal: { comparison, lineage, eventId: randomUUID() },
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue(demo),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.createDemoProfile()).resolves.toEqual(demo);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/profiles/demo",
+      expect.objectContaining({ method: "POST" }),
     );
   });
 });

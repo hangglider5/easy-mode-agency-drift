@@ -113,6 +113,18 @@ export const CompareResponseSchema = z.object({
   eventId: z.string().uuid(),
 });
 
+export const DemoProfileResponseSchema = CreateProfileResponseSchema.extend({
+  mode: z.literal("demo"),
+  datesAreSimulated: z.literal(true),
+  decisionId: z.string().uuid(),
+  reveal: CompareResponseSchema,
+});
+
+export const ManualModeResponseSchema = z.object({
+  manualMode: z.literal(true),
+  revokedConsentIds: z.array(z.string().uuid()),
+});
+
 export const ReceiptResponseSchema = z.object({
   metrics: z.object({
     aiOriginatedPreferenceRatio: z.number().min(0).max(1),
@@ -146,4 +158,6 @@ export type AlternativesResponse = z.infer<
 export type ComparisonResult = z.infer<typeof ComparisonResultSchema>;
 export type LineageResponse = z.infer<typeof LineageResponseSchema>;
 export type CompareResponse = z.infer<typeof CompareResponseSchema>;
+export type DemoProfileResponse = z.infer<typeof DemoProfileResponseSchema>;
+export type ManualModeResponse = z.infer<typeof ManualModeResponseSchema>;
 export type ReceiptResponse = z.infer<typeof ReceiptResponseSchema>;

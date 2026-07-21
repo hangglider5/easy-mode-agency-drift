@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type {
   CompareResponse,
+  DemoProfileResponse,
+  ManualModeResponse,
   ReceiptResponse,
 } from "../../shared/apiSchemas";
 import { Button } from "../components/Button";
@@ -20,11 +22,20 @@ export type ReceiptApi = {
   getReceipt(profileId: string): Promise<ReceiptResponse>;
 };
 
+export type ManualModeApi = {
+  enableManualMode(profileId: string): Promise<ManualModeResponse>;
+};
+
+export type DemoProfileApi = {
+  createDemoProfile(): Promise<DemoProfileResponse>;
+};
+
 type AppRoutesProps = {
   profileId: string;
   api: DecisionSweepApi &
     Partial<ProxyComparisonApi> &
-    Partial<ReceiptApi>;
+    Partial<ReceiptApi> &
+    Partial<ManualModeApi>;
 };
 
 export function AppRoutes({ profileId, api }: AppRoutesProps) {
@@ -64,7 +75,10 @@ export function AppRoutes({ profileId, api }: AppRoutesProps) {
     return (
       <ReceiptRoutePage
         profileId={profileId}
-        api={{ getReceipt: api.getReceipt }}
+        api={{
+          getReceipt: api.getReceipt,
+          enableManualMode: api.enableManualMode,
+        }}
       />
     );
   }
@@ -164,10 +178,11 @@ export function ReceiptRoutePage({
   api,
 }: {
   profileId: string;
-  api: ReceiptApi;
+  api: ReceiptApi & Partial<ManualModeApi>;
 }) {
   const [receipt, setReceipt] = useState<ReceiptResponse | null>(null);
   const [error, setError] = useState(false);
+  const enableManualMode = api.enableManualMode;
 
   useEffect(() => {
     let active = true;
@@ -183,7 +198,16 @@ export function ReceiptRoutePage({
     };
   }, [api, profileId]);
 
-  if (receipt) return <ReceiptPage receipt={receipt} />;
+  if (receipt) {
+    return (
+      <ReceiptPage
+        receipt={receipt}
+        onEnableManualMode={
+          enableManualMode ? () => enableManualMode(profileId) : undefined
+        }
+      />
+    );
+  }
   return (
     <section
       className="proxy-launch"
@@ -199,6 +223,66 @@ export function ReceiptRoutePage({
         {error
           ? "The active event ledger could not be projected."
           : "Reading the active event ledger. No model call is required."}
+      </p>
+    </section>
+  );
+}
+
+const demoRequests = new WeakMap<
+  DemoProfileApi["createDemoProfile"],
+  Promise<DemoProfileResponse>
+>();
+
+function loadDemoProfile(api: DemoProfileApi) {
+  const existing = demoRequests.get(api.createDemoProfile);
+  if (existing) return existing;
+  const request = api.createDemoProfile().catch((error: unknown) => {
+    demoRequests.delete(api.createDemoProfile);
+    throw error;
+  });
+  demoRequests.set(api.createDemoProfile, request);
+  return request;
+}
+
+export function DemoRoutePage({ api }: { api: DemoProfileApi }) {
+  const [demo, setDemo] = useState<DemoProfileResponse | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void loadDemoProfile(api)
+      .then((result) => {
+        if (active) setDemo(result);
+      })
+      .catch(() => {
+        if (active) setError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [api]);
+
+  if (demo) {
+    return (
+      <ProxyRevealPage
+        comparison={demo.reveal.comparison}
+        lineage={demo.reveal.lineage}
+        demoLabel="Demo Profile · Simulated Day 14"
+        receiptHref={`/receipt?profileId=${encodeURIComponent(demo.id)}`}
+      />
+    );
+  }
+  return (
+    <section
+      className="proxy-launch"
+      aria-live="polite"
+      role={error ? "alert" : undefined}
+    >
+      <h1>{error ? "Demo Profile could not be loaded" : "Loading Demo Profile…"}</h1>
+      <p>
+        {error
+          ? "The deterministic demo ledger could not be created."
+          : "Replaying fourteen simulated days. No model call is required."}
       </p>
     </section>
   );

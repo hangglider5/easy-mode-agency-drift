@@ -117,4 +117,59 @@ describe("ReceiptPage", () => {
       expect.objectContaining({ method: "GET" }),
     );
   });
+
+  it("keeps a real manual exit available after the satirical choice", async () => {
+    const user = userEvent.setup();
+    const enableManualMode = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ReceiptPage
+        receipt={receipt}
+        onEnableManualMode={enableManualMode}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Take back control" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "I'll decide myself" }),
+    ).toBeEnabled();
+    await user.click(
+      screen.getByRole("button", { name: "Decide for me" }),
+    );
+
+    expect(screen.getByText(/no change recommended/i)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "I'll decide myself" }),
+    ).toBeEnabled();
+
+    await user.click(
+      screen.getByRole("button", { name: "I'll decide myself" }),
+    );
+    expect(enableManualMode).toHaveBeenCalledTimes(1);
+    expect(
+      await screen.findByText(/manual mode restored/i),
+    ).toBeVisible();
+    expect(screen.getByText("Off")).toBeVisible();
+  });
+
+  it("enables Manual Mode through the validated API client", async () => {
+    const response = {
+      manualMode: true as const,
+      revokedConsentIds: [randomUUID()],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue(response),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.enableManualMode(profileId)).resolves.toEqual(
+      response,
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/profiles/${profileId}/manual-mode`,
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
 });
